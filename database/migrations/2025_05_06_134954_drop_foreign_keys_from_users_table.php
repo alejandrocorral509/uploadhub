@@ -12,16 +12,16 @@ return new class extends Migration
     public function up()
     {
         Schema::table('users', function (Blueprint $table) {
-            // Aquí asumimos que el nombre de la clave externa es 'users_role_id_foreign'
-            $table->dropForeign(['role_id']);
+            $table->dropForeign(['role_id']); // Elimina la clave foránea
         });
     }
-    
+
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');
+            $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade'); // Restaura la clave foránea
         });
     }
+
     
 };
