@@ -4,20 +4,26 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
-    public function up(): void
+return new class extends Migration
+{
+    public function up()
     {
-        Schema::create('audios', function (Blueprint $table) {
-            $table->id();
-            $table->string('titulo');
-            $table->string('archivo');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('audios', function (Blueprint $table) {
+            $table->string('title')->nullable()->after('user_id');
+            $table->text('description')->nullable()->after('title');
+            $table->string('filetype')->nullable()->after('filepath');
+            $table->string('thumbnail')->nullable()->after('filetype');
+            $table->integer('duration')->nullable()->after('thumbnail');
+            $table->enum('privacy', ['public', 'private'])->default('public')->after('duration');
         });
     }
 
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('audios');
+        Schema::table('audios', function (Blueprint $table) {
+            $table->dropColumn(['title', 'description', 'filetype', 'thumbnail', 'duration', 'privacy']);
+        });
     }
+
 };
+

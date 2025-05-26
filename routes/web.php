@@ -4,6 +4,8 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\AudioController;
+
 
 // Rutas de autenticación (serán gestionadas por 'auth.php')
 require __DIR__.'/auth.php';
@@ -32,3 +34,20 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [AudioController::class, 'index'])->name('dashboard');
+    Route::post('/audios', [AudioController::class, 'store'])->name('audios.store');
+    Route::delete('/audios/{audio}', [AudioController::class, 'destroy'])->name('audios.destroy');
+});
+
+Route::get('/audios-publicos', [AudioController::class, 'publicIndex'])->name('audios.public');
+
+use App\Http\Controllers\CommentController;
+
+Route::post('/audios/{audio}/comments', [CommentController::class, 'store'])
+    ->middleware('auth')
+    ->name('comments.store');
+
+
+ Route::post('/audios/{audio}/like', [AudioController::class, 'toggleLike'])->middleware('auth')->name('audios.like');
