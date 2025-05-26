@@ -96,24 +96,20 @@ public function store(Request $request)
 
         return view('audios.public', compact('audios'));
     }
+    public function toggleLike(Audio $audio)
+    {
+        $user = Auth::user();
 
-public function toggleLike(Audio $audio)
-{
-    $user = Auth::user();
-
-    if ($user->likedAudios()->where('audio_id', $audio->id)->exists()) {
-        $user->likedAudios()->detach($audio->id);
-        $liked = false;
-    } else {
-        $user->likedAudios()->attach($audio->id);
-        $liked = true;
+        if ($audio->likedUsers()->where('user_id', $user->id)->exists()) {
+            // Si ya le gustó, eliminar el like
+            $audio->likedUsers()->detach($user->id);
+            return response()->json(['message' => 'Like removed']);
+        } else {
+            // Si no le gustó, agregar el like
+            $audio->likedUsers()->attach($user->id);
+            return response()->json(['message' => 'Like added']);
+        }
     }
-
-    return response()->json([
-        'liked' => $liked,
-        'likes_count' => $audio->likedUsers()->count(),
-    ]);
-}
 
 
 
