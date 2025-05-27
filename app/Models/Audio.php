@@ -11,17 +11,18 @@ class Audio extends Model
 
     protected $table = 'audios';
 
-    protected $fillable = [
-        'user_id',
-        'titulo',      // usa 'titulo' para el título
-        'archivo',     // usa 'archivo' para el path/nombre del archivo
-        'youtube_url',
-        'description',
-        'filetype',
-        'thumbnail',
-        'duration',
-        'privacy',
-    ];
+protected $fillable = [
+    'user_id',
+    'title',
+    'filepath',
+    'youtube_url',
+    'description',
+    'filetype',
+    'thumbnail',
+    'duration',
+    'privacy',
+];
+
 
     public function user()
     {
@@ -47,6 +48,18 @@ public function comments()
     {
         return $this->belongsToMany(User::class, 'audio_user_likes', 'audio_id', 'user_id')->withTimestamps();
     }
+
+public function likes()
+{
+    return $this->belongsToMany(User::class, 'audio_user_likes')->withTimestamps();
+}
+
+
+// Opcional: contar me gustas
+public function likesCount()
+{
+    return $this->likes()->count();
+}
 
 
 

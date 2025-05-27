@@ -12,7 +12,9 @@ return new class extends Migration
 public function up()
 {
     Schema::table('audios', function (Blueprint $table) {
-        $table->string('filetype')->nullable()->after('archivo');
+        if (!Schema::hasColumn('audios', 'filetype')) {
+            $table->string('filetype')->nullable()->after('filepath');
+        }
     });
 }
 

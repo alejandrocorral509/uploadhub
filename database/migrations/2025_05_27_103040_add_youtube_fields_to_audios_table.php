@@ -9,19 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up()
-{
-    Schema::table('audios', function (Blueprint $table) {
-        $table->string('youtube_id')->nullable()->after('archivo');
-        $table->enum('video_type', ['local', 'youtube'])->default('local')->after('filetype');
-    });
-}
+    public function up()
+    {
+        Schema::table('audios', function (Blueprint $table) {
+            // Cambiar 'archivo' por 'filepath' que sí existe
+            $table->string('youtube_id')->nullable()->after('filepath');
+            $table->enum('video_type', ['local', 'youtube'])->default('local')->after('filetype');
+        });
+    }
 
-public function down()
-{
-    Schema::table('audios', function (Blueprint $table) {
-        $table->dropColumn(['youtube_id', 'video_type']);
-    });
-}
-
+    public function down()
+    {
+        Schema::table('audios', function (Blueprint $table) {
+            $table->dropColumn(['youtube_id', 'video_type']);
+        });
+    }
 };

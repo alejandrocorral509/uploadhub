@@ -37,7 +37,7 @@
                             <tbody class="bg-white divide-y divide-gray-200">
                                 @forelse ($audios as $audio)
                                     <tr>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $audio->titulo }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ $audio->title }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                             @foreach ($audio->categories as $category)
                                                 <span class="inline-block bg-indigo-100 text-indigo-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">
@@ -65,7 +65,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-6 text-center text-gray-500 italic">No tienes podcasts subidos aún.</td>
+                                        <td colspan="6" class="px-6 py-6 text-center text-gray-500 italic">No tienes archivos subidos aún.</td>
                                     </tr>
                                 @endforelse
                             </tbody>

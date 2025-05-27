@@ -12,9 +12,12 @@ return new class extends Migration
     public function up()
     {
         Schema::table('audios', function (Blueprint $table) {
-            // Cambiar columna youtube_id a youtube_url (string nullable)
-            $table->dropColumn('youtube_id');
-            $table->string('youtube_url')->nullable()->after('archivo');
+            // Primero eliminamos la columna 'youtube_id' si existe
+            if (Schema::hasColumn('audios', 'youtube_id')) {
+                $table->dropColumn('youtube_id');
+            }
+            // Luego agregamos 'youtube_url' después de 'filepath'
+            $table->string('youtube_url')->nullable()->after('filepath');
         });
     }
 
@@ -25,7 +28,7 @@ return new class extends Migration
     {
         Schema::table('audios', function (Blueprint $table) {
             $table->dropColumn('youtube_url');
-            $table->string('youtube_id')->nullable()->after('archivo');
+            $table->string('youtube_id')->nullable()->after('filepath');
         });
     }
 };

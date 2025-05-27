@@ -59,3 +59,9 @@ Route::post('/audios', [AudioController::class, 'store'])->name('audios.store');
 
 Route::get('/audios/upload', [AudioController::class, 'upload'])->name('audios.upload');
 
+Route::post('/audios/{audio}/toggle-like', [AudioController::class, 'toggleLike'])->middleware('auth')->name('audios.toggle-like');
+
+
+
+Route::get('/audios/{audio}/download', [AudioController::class, 'download'])->name('audios.download');
+

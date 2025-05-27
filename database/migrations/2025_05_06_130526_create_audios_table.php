@@ -8,22 +8,23 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('audios', function (Blueprint $table) {
-            $table->string('title')->nullable()->after('user_id');
-            $table->text('description')->nullable()->after('title');
-            $table->string('filetype')->nullable()->after('filepath');
-            $table->string('thumbnail')->nullable()->after('filetype');
-            $table->integer('duration')->nullable()->after('thumbnail');
-            $table->enum('privacy', ['public', 'private'])->default('public')->after('duration');
+        Schema::create('audios', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('filepath')->nullable();
+            // Campos extra que tenías en la otra migración:
+            $table->string('title')->nullable();
+            $table->text('description')->nullable();
+            $table->string('filetype')->nullable();
+            $table->string('thumbnail')->nullable();
+            $table->integer('duration')->nullable();
+            $table->enum('privacy', ['public', 'private'])->default('public');
+            $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::table('audios', function (Blueprint $table) {
-            $table->dropColumn(['title', 'description', 'filetype', 'thumbnail', 'duration', 'privacy']);
-        });
+        Schema::dropIfExists('audios');
     }
-
 };
-

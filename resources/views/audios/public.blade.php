@@ -3,7 +3,7 @@
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8 bg-white rounded-lg shadow-md p-6">
 
             {{-- Buscador y filtro por categoría --}}
-            <form method="GET" action="" class="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+            <form method="GET" action="{{ route('audios.public') }}" class="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
                 <div class="relative flex-grow">
                     <input 
                         type="text" 
@@ -39,7 +39,7 @@
                     @foreach($audios as $audio)
                         <article class="border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow duration-150">
                             <header class="mb-1">
-                                <h2 class="font-semibold text-lg text-gray-800 truncate">{{ $audio->titulo }}</h2>
+                                <h2 class="font-semibold text-lg text-gray-800 truncate">{{ $audio->title }}</h2>
                                 <p class="text-xs text-gray-500">Subido por {{ $audio->user->name }}</p>
                             </header>
 
@@ -58,6 +58,33 @@
                                 @endforeach
                             </div>
 
+                            {{-- Botón Me gusta --}}
+                            <div class="flex items-center space-x-3 mb-3">
+                                @auth
+                                    <button
+                                        type="button"
+                                        class="like-btn flex items-center space-x-1 text-indigo-600 hover:text-indigo-800 focus:outline-none"
+                                        data-audio-id="{{ $audio->id }}"
+                                        aria-pressed="{{ $audio->likes->contains(auth()->user()->id) ? 'true' : 'false' }}"
+                                        title="Me gusta"
+                                    >
+                                        <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            class="h-5 w-5" 
+                                            fill="{{ $audio->likes->contains(auth()->user()->id) ? 'currentColor' : 'none' }}" 
+                                            viewBox="0 0 24 24" 
+                                            stroke="currentColor" 
+                                            stroke-width="2"
+                                        >
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.636l1.318-1.318a4.5 4.5 0 116.364 6.364L12 21.364l-7.682-7.682a4.5 4.5 0 010-6.364z" />
+                                        </svg>
+                                        <span class="text-sm font-semibold">{{ $audio->likes->count() }}</span>
+                                    </button>
+                                @else
+                                    <span class="text-gray-500 text-sm">Likes: {{ $audio->likes->count() }}</span>
+                                @endauth
+                            </div>
+
                             @if (Str::startsWith($audio->filetype, 'audio'))
                                 <div class="mb-3 flex items-center gap-4 select-none">
                                     <button
@@ -71,7 +98,7 @@
                                     </button>
 
                                     <audio id="audio-{{ $audio->id }}" preload="none" class="flex-grow rounded bg-gray-100" style="height: 32px;">
-                                        <source src="{{ asset('storage/' . $audio->archivo) }}" type="{{ $audio->filetype }}">
+                                        <source src="{{ asset('storage/' . $audio->filepath) }}" type="{{ $audio->filetype }}">
                                         Tu navegador no soporta la reproducción de audio.
                                     </audio>
 
@@ -106,18 +133,15 @@
                                     />
 
                                     {{-- Botón descarga con mismo estilo --}}
-                                    <a 
-                                        href="{{ asset('storage/' . $audio->archivo) }}" 
-                                        download="{{ $audio->titulo }}{{ \Illuminate\Support\Str::startsWith($audio->archivo, '.') ? $audio->archivo : '.' . pathinfo($audio->archivo, PATHINFO_EXTENSION) }}"
+                                    <a href="{{ route('audios.download', $audio) }}" 
                                         class="w-10 h-10 flex items-center justify-center rounded-full bg-indigo-600 text-white hover:bg-indigo-700 transition"
-                                        title="Descargar {{ $audio->titulo }}"
-                                    >
+                                        title="Descargar {{ $audio->title }}">
                                         <i class="fas fa-download"></i>
                                     </a>
                                 </div>
                             @elseif (Str::startsWith($audio->filetype, 'video'))
                                 <video controls class="w-full rounded-md" preload="metadata" style="max-height: 180px;">
-                                    <source src="{{ asset('storage/' . $audio->archivo) }}" type="{{ $audio->filetype }}">
+                                    <source src="{{ asset('storage/' . $audio->filepath) }}" type="{{ $audio->filetype }}">
                                     Tu navegador no soporta la reproducción de video.
                                 </video>
                             @endif
@@ -126,13 +150,16 @@
                             <section>
                                 <button 
                                     type="button" 
-                                    class="text-indigo-600 text-sm font-medium mb-2 focus:outline-none"
-                                    onclick="const c=document.getElementById('comments-{{ $audio->id }}'); c.classList.toggle('hidden'); this.textContent = this.textContent.includes('Mostrar') ? 'Ocultar comentarios' : 'Mostrar comentarios';"
+                                    class="comments-toggle-btn text-indigo-600 text-sm font-medium mb-2 focus:outline-none"
+                                    data-audio-id="{{ $audio->id }}"
+                                    aria-expanded="false"
                                 >
-                                    Mostrar comentarios ({{ $audio->comments->count() }})
+                                    <span class="toggle-text">Mostrar comentarios</span> 
+                                    (<span class="comments-count">{{ $audio->comments->count() }}</span>)
                                 </button>
 
-                                <div id="comments-{{ $audio->id }}" class="hidden">
+
+                                <div id="comments-{{ $audio->id }}" class="hidden comments-container">
                                     @auth
                                     <form action="{{ route('comments.store', $audio) }}" method="POST" class="mb-4">
                                         @csrf
@@ -251,6 +278,69 @@
                     progressBar.value = 0;
                 });
             });
+
+            // Toggle like button
+            const likeButtons = document.querySelectorAll('.like-btn');
+
+            likeButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const audioId = button.dataset.audioId;
+
+                    try {
+                        const response = await fetch(`/audios/${audioId}/toggle-like`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                        });
+
+                        if (!response.ok) throw new Error('Error en la respuesta');
+
+                        const data = await response.json();
+
+                        // Actualizar contador
+                        button.querySelector('span').textContent = data.likes_count;
+
+                        // Actualizar icono según liked
+                        const svg = button.querySelector('svg');
+                        if (data.liked) {
+                            svg.setAttribute('fill', 'currentColor');
+                            button.setAttribute('aria-pressed', 'true');
+                        } else {
+                            svg.setAttribute('fill', 'none');
+                            button.setAttribute('aria-pressed', 'false');
+                        }
+                    } catch (error) {
+                        console.error('Error toggling like:', error);
+                    }
+                });
+            });
+
+            // Toggle comentarios con ocultación del número
+document.querySelectorAll('.comments-toggle-btn').forEach(button => {
+    button.addEventListener('click', () => {
+        const audioId = button.dataset.audioId;
+        const commentsDiv = document.getElementById(`comments-${audioId}`);
+
+        const isHidden = commentsDiv.classList.contains('hidden');
+        const toggleTextSpan = button.querySelector('.toggle-text');
+
+        if (isHidden) {
+            commentsDiv.classList.remove('hidden');
+            button.setAttribute('aria-expanded', 'true');
+            toggleTextSpan.textContent = 'Ocultar comentarios';
+        } else {
+            commentsDiv.classList.add('hidden');
+            button.setAttribute('aria-expanded', 'false');
+            toggleTextSpan.textContent = 'Mostrar comentarios';
+        }
+    });
+});
+
+
+
         });
     </script>
 </x-app-layout>

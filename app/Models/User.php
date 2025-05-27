@@ -18,10 +18,11 @@ class User extends Authenticatable
         return $this->belongsTo(Role::class);
     }
 
-    public function likedAudios()
-    {
-        return $this->belongsToMany(Audio::class, 'audio_user_likes', 'user_id', 'audio_id')->withTimestamps();
-    }
+public function likedAudios()
+{
+    return $this->belongsToMany(Audio::class, 'audio_user_likes')->withTimestamps();
+}
+
 
 
 }
