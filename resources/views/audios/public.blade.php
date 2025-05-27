@@ -85,7 +85,27 @@
                                 @endauth
                             </div>
 
-                            @if (Str::startsWith($audio->filetype, 'audio'))
+                            {{-- Reproductor o video YouTube embebido --}}
+                            @if ($audio->youtube_url)
+                                @php
+                                    preg_match('/(youtu\.be\/|v=)([^&]+)/', $audio->youtube_url, $matches);
+                                    $videoId = $matches[2] ?? null;
+                                @endphp
+
+                                @if ($videoId)
+                                    <div class="mb-3">
+                                        <iframe
+                                            width="100%"
+                                            height="315"
+                                            src="https://www.youtube.com/embed/{{ $videoId }}"
+                                            title="YouTube video player"
+                                            frameborder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen
+                                        ></iframe>
+                                    </div>
+                                @endif
+                            @elseif (Str::startsWith($audio->filetype, 'audio'))
                                 <div class="mb-3 flex items-center gap-4 select-none">
                                     <button
                                         type="button"
@@ -157,7 +177,6 @@
                                     <span class="toggle-text">Mostrar comentarios</span> 
                                     (<span class="comments-count">{{ $audio->comments->count() }}</span>)
                                 </button>
-
 
                                 <div id="comments-{{ $audio->id }}" class="hidden comments-container">
                                     @auth
@@ -319,28 +338,25 @@
             });
 
             // Toggle comentarios con ocultación del número
-document.querySelectorAll('.comments-toggle-btn').forEach(button => {
-    button.addEventListener('click', () => {
-        const audioId = button.dataset.audioId;
-        const commentsDiv = document.getElementById(`comments-${audioId}`);
+            document.querySelectorAll('.comments-toggle-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const audioId = button.dataset.audioId;
+                    const commentsDiv = document.getElementById(`comments-${audioId}`);
 
-        const isHidden = commentsDiv.classList.contains('hidden');
-        const toggleTextSpan = button.querySelector('.toggle-text');
+                    const isHidden = commentsDiv.classList.contains('hidden');
+                    const toggleTextSpan = button.querySelector('.toggle-text');
 
-        if (isHidden) {
-            commentsDiv.classList.remove('hidden');
-            button.setAttribute('aria-expanded', 'true');
-            toggleTextSpan.textContent = 'Ocultar comentarios';
-        } else {
-            commentsDiv.classList.add('hidden');
-            button.setAttribute('aria-expanded', 'false');
-            toggleTextSpan.textContent = 'Mostrar comentarios';
-        }
-    });
-});
-
-
-
+                    if (isHidden) {
+                        commentsDiv.classList.remove('hidden');
+                        button.setAttribute('aria-expanded', 'true');
+                        toggleTextSpan.textContent = 'Ocultar comentarios';
+                    } else {
+                        commentsDiv.classList.add('hidden');
+                        button.setAttribute('aria-expanded', 'false');
+                        toggleTextSpan.textContent = 'Mostrar comentarios';
+                    }
+                });
+            });
         });
     </script>
 </x-app-layout>

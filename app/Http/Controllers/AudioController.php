@@ -16,7 +16,9 @@ class AudioController extends Controller
 {
 public function index(Request $request)
 {
-    $query = Audio::where('user_id', Auth::id())
+    $user = Auth::user();
+
+    $query = Audio::where('user_id', $user->id)
         ->with(['categories', 'tags', 'likes', 'user']);
 
     // Filtrar por categoría
@@ -38,68 +40,84 @@ public function index(Request $request)
 
     $audios = $query->latest()->get();
 
+    // Audios que el usuario ha marcado como "Me gusta"
+    $likedAudios = $user->likedAudios()->with(['categories', 'tags', 'user'])->latest()->get();
+
+    // Total audios subidos
+    $totalAudios = Audio::where('user_id', $user->id)->count();
+
+    // Total likes recibidos en todos los audios del usuario
+    $totalLikes = Audio::where('user_id', $user->id)
+        ->withCount('likes')
+        ->get()
+        ->sum('likes_count');
+
     $categories = Category::orderBy('name')->get();
 
-    return view('dashboard', compact('audios', 'categories'));
+    return view('dashboard', compact('audios', 'likedAudios', 'categories', 'totalAudios', 'totalLikes'));
 }
 
 
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'audio' => 'nullable|file|mimes:mp3,wav,m4a,mp4,ogg|max:51200',
-            'youtube_url' => ['nullable', 'url', 'regex:#^(https?://)?(www\.youtube\.com|youtu\.?be)/.+$#'],
-            'description' => 'nullable|string',
-            'privacy' => 'required|in:public,private',
-            'categories' => 'nullable|array',
-            'categories.*' => 'exists:categories,id',
-            'tags' => 'nullable|string',
-        ]);
 
-        if (!$request->hasFile('audio') && !$request->filled('youtube_url')) {
-            return back()->withErrors(['audio' => 'Debe subir un archivo o proporcionar un enlace de YouTube'])->withInput();
-        }
 
-        $filepath = null;
-        $filetype = null;
+public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'audio' => 'nullable|file|mimes:mp3,wav,m4a,mp4,ogg|max:51200',
+        'youtube_url' => ['nullable', 'url', 'regex:#^(https?://)?(www\.youtube\.com|youtu\.?be)/.+$#'],
+        'description' => 'nullable|string',
+        'privacy' => 'required|in:public,private',
+        'categories' => 'nullable|array',
+        'categories.*' => 'exists:categories,id',
+        'tags' => 'nullable|string',
+    ]);
 
-        if ($request->hasFile('audio')) {
-            $file = $request->file('audio');
-            $filepath = $file->store('audios', 'public');
-            $filetype = $file->getClientMimeType();
-        }
-
-        $youtubeUrl = $request->input('youtube_url', null);
-
-        $audio = Audio::create([
-            'user_id' => Auth::id(),
-            'title' => $request->input('title'),
-            'filepath' => $filepath, // cambiado de 'archivo' a 'filepath'
-            'youtube_url' => $youtubeUrl,
-            'description' => $request->input('description'),
-            'filetype' => $filepath ? $filetype : ($youtubeUrl ? 'youtube' : null),
-            'privacy' => $request->input('privacy'),
-        ]);
-
-        if ($request->has('categories')) {
-            $audio->categories()->sync($request->input('categories'));
-        }
-
-        if ($request->has('tags')) {
-            $tags = collect(explode(',', $request->input('tags')))
-                ->map(fn($tag) => trim($tag))
-                ->filter()
-                ->unique();
-
-            $tagIds = $tags->map(fn($tagName) => Tag::firstOrCreate(['name' => $tagName])->id);
-
-            $audio->tags()->sync($tagIds);
-        }
-
-        return redirect()->route('dashboard')->with('success', 'Audio subido correctamente.');
+    if (!$request->hasFile('audio') && !$request->filled('youtube_url')) {
+        return back()->withErrors(['audio' => 'Debe subir un archivo o proporcionar un enlace de YouTube'])->withInput();
     }
+
+    $filepath = null;
+    $filetype = null;
+
+    if ($request->hasFile('audio')) {
+        $file = $request->file('audio');
+        $filepath = $file->store('audios', 'public');
+        $filetype = $file->getClientMimeType();
+    }
+
+    $youtubeUrl = $request->input('youtube_url', null);
+
+    // Aquí se asigna el usuario autenticado correctamente
+    $audio = Audio::create([
+        'user_id' => Auth::id(),
+        'title' => $request->input('title'),
+        'filepath' => $filepath,
+        'youtube_url' => $youtubeUrl,
+        'description' => $request->input('description'),
+        'filetype' => $filepath ? $filetype : ($youtubeUrl ? 'youtube' : null),
+        'privacy' => $request->input('privacy'),
+    ]);
+
+    if ($request->has('categories')) {
+        $audio->categories()->sync($request->input('categories'));
+    }
+
+    if ($request->has('tags')) {
+        $tags = collect(explode(',', $request->input('tags')))
+            ->map(fn($tag) => trim($tag))
+            ->filter()
+            ->unique();
+
+        $tagIds = $tags->map(fn($tagName) => Tag::firstOrCreate(['name' => $tagName])->id);
+
+        $audio->tags()->sync($tagIds);
+    }
+
+    return redirect()->route('dashboard')->with('success', 'Audio subido correctamente.');
+}
+
 
     public function destroy(Audio $audio)
     {
