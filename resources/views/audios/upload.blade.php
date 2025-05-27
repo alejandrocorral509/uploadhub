@@ -203,6 +203,22 @@
                         >
                     </div>
 
+                    {{-- Imagen portada (opcional) --}}
+                    <div>
+                        <label for="cover" class="block text-sm font-semibold text-gray-700 mb-1">Imagen portada (opcional)</label>
+                        <input
+                            type="file"
+                            name="cover"
+                            id="cover"
+                            accept="image/*"
+                            class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm
+                                focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                        >
+                    </div>
+
+                    {{-- Botón enviar --}}
+
+
                     <button
                         type="submit"
                         class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-md shadow-md

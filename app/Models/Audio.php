@@ -21,6 +21,7 @@ protected $fillable = [
     'thumbnail',
     'duration',
     'privacy',
+    'cover',
 ];
 
 

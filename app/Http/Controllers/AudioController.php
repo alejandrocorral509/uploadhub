@@ -72,6 +72,8 @@ public function store(Request $request)
         'categories' => 'nullable|array',
         'categories.*' => 'exists:categories,id',
         'tags' => 'nullable|string',
+        'cover' => 'nullable|image|max:5120', // opcional, máximo 5MB
+
     ]);
 
     if (!$request->hasFile('audio') && !$request->filled('youtube_url')) {
@@ -89,11 +91,17 @@ public function store(Request $request)
 
     $youtubeUrl = $request->input('youtube_url', null);
 
+    $coverPath = null;
+    if ($request->hasFile('cover')) {
+        $coverPath = $request->file('cover')->store('covers', 'public');
+}
+
     // Aquí se asigna el usuario autenticado correctamente
     $audio = Audio::create([
         'user_id' => Auth::id(),
         'title' => $request->input('title'),
         'filepath' => $filepath,
+        'cover' => $coverPath, // aquí guardamos la ruta
         'youtube_url' => $youtubeUrl,
         'description' => $request->input('description'),
         'filetype' => $filepath ? $filetype : ($youtubeUrl ? 'youtube' : null),

@@ -26,9 +26,10 @@
                     <x-nav-link :href="route('audios.public')" :active="request()->routeIs('audios.public')" 
                                 class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 
                                     transition duration-150 flex items-center space-x-1">
-                        <i class="fa-solid fa-magnifying-glass text-lg"></i>
-                        <span>Explorar</span>
+                        <i class="fa-solid fa-house text-lg"></i>
+                        <span>Inicio</span>
                     </x-nav-link>
+
 
                     <x-nav-link href="#" 
                                 class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 
