@@ -69,7 +69,7 @@ public function store(Request $request)
         'youtube_url' => ['nullable', 'url', 'regex:#^(https?://)?(www\.youtube\.com|youtu\.?be)/.+$#'],
         'description' => 'nullable|string',
         'privacy' => 'required|in:public,private',
-        'categories' => 'nullable|array',
+        'categories' => 'required|array|min:1',  // <-- aquí la validación
         'categories.*' => 'exists:categories,id',
         'tags' => 'nullable|string',
         'cover' => 'nullable|image|max:5120', // opcional, máximo 5MB

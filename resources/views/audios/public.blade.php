@@ -364,4 +364,20 @@
             });
         });
     </script>
+    @if(session('success'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'success',
+                title: '{{ session('success') }}',
+                toast: true,
+                position: 'top-end',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        });
+    </script>
+@endif
+
 </x-app-layout>

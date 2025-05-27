@@ -259,41 +259,54 @@
 
     {{-- Script validar formulario con SweetAlert2 --}}
     <script>
-        function validarFormulario() {
-            const title = document.getElementById('title').value.trim();
-            const audioInput = document.getElementById('audio');
-            const audio = audioInput.files.length;
-            const youtubeUrl = document.getElementById('youtube_url').value.trim();
+function validarFormulario() {
+    const title = document.getElementById('title').value.trim();
+    const audioInput = document.getElementById('audio');
+    const audio = audioInput.files.length;
+    const youtubeUrl = document.getElementById('youtube_url').value.trim();
 
-            if (!title) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Título requerido',
-                    text: 'Por favor, introduce un título.',
-                });
-                return false;
-            }
+    // Obtener las categorías seleccionadas (input hidden)
+    const selectedCategories = document.querySelectorAll('input[name="categories[]"]');
+    
+    if (!title) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Título requerido',
+            text: 'Por favor, introduce un título.',
+        });
+        return false;
+    }
 
-            if (!audio && !youtubeUrl) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Archivo o enlace requerido',
-                    text: 'Por favor, selecciona un archivo o pega un enlace de YouTube.',
-                });
-                return false;
-            }
+    if (!audio && !youtubeUrl) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Archivo o enlace requerido',
+            text: 'Por favor, selecciona un archivo o pega un enlace de YouTube.',
+        });
+        return false;
+    }
 
-            if (youtubeUrl && !/^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/.test(youtubeUrl)) {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Enlace inválido',
-                    text: 'Por favor, introduce un enlace válido de YouTube.',
-                });
-                return false;
-            }
+    if (selectedCategories.length === 0) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Categoría requerida',
+            text: 'Por favor, selecciona al menos una categoría.',
+        });
+        return false;
+    }
 
-            return true;
-        }
+    if (youtubeUrl && !/^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/.test(youtubeUrl)) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Enlace inválido',
+            text: 'Por favor, introduce un enlace válido de YouTube.',
+        });
+        return false;
+    }
+
+    return true;
+}
+
     </script>
 
     {{-- Remix Icons CDN --}}

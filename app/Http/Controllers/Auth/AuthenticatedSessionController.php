@@ -22,20 +22,24 @@ class AuthenticatedSessionController extends Controller
         ]);
 
         // Intentar autenticar al usuario
-        if (Auth::attempt($validated)) {
-            // Redirigir al dashboard si el login es exitoso
-            return redirect()->intended(route('dashboard'));
-        }
+            if (Auth::attempt($validated)) {
+                session()->flash('success', '¡Has iniciado sesión correctamente!');
+                return redirect()->intended(route('audios.public'));
+            }
+
+
 
         // Si la autenticación falla, volver a mostrar el formulario con un error
         return back()->withErrors([
             'email' => __('The provided credentials do not match our records.'),
         ]);
+
+        
     }
 
     public function destroy(Request $request)
     {
         Auth::logout(); // Cerrar sesión
-        return redirect('/');
+        return redirect('/login');
     }
 }

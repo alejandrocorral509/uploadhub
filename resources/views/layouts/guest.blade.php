@@ -5,7 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="csrf-token" content="{{ csrf_token() }}" />
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'UploadHub') }}</title>
+        
+        <!-- Favicon personalizado -->
+<link rel="icon" href="{{ asset('images/favICON.png') }}" type="image/png" />
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net" />
@@ -21,5 +24,27 @@
         <div class="w-full max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden rounded-lg">
             {{ $slot }}
         </div>
+        </div>
+        
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+            @if(session('success'))
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '{{ session('success') }}',
+                        toast: true,
+                        position: 'top-start',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                });
+            </script>
+            @endif
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
     </body>
 </html>

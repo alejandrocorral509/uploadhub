@@ -17,30 +17,31 @@ class RegisteredUserController extends Controller
         return view('auth.register'); // Redirige a la vista del registro
     }
 
-    public function store(Request $request)
-    {
-        // Validación de los datos
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
+public function store(Request $request)
+{
+    // Validación de los datos
+    $validated = $request->validate([
+        'name' => ['required', 'string', 'max:255'],
+        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+        'password' => ['required', 'string', 'min:8', 'confirmed'],
+    ]);
 
-        // Creamos el usuario con un rol por defecto (en este caso 'default')
-        $role = Role::firstOrCreate(['name' => 'default']); // Si no existe el rol 'default', lo creamos
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'role_id' => $role->id,  // Asignamos el rol
-        ]);
+    // Creamos el usuario con un rol por defecto (en este caso 'default')
+    $role = Role::firstOrCreate(['name' => 'default']); // Si no existe el rol 'default', lo creamos
+    $user = User::create([
+        'name' => $validated['name'],
+        'email' => $validated['email'],
+        'password' => Hash::make($validated['password']),
+        'role_id' => $role->id,  // Asignamos el rol
+    ]);
 
-        // Autenticar al usuario después del registro
-        Auth::login($user); 
+    // Mensaje flash para mostrar al llegar al login
+    session()->flash('success', '¡Cuenta creada correctamente! Ahora puedes iniciar sesión.');
 
-        // Redirigir al dashboard o a cualquier otra página
-        return redirect()->route('dashboard');
-    }
+    // Redirigir al login
+    return redirect()->route('login');
+}
+
 }
 
 
