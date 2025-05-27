@@ -15,6 +15,7 @@ class Audio extends Model
         'user_id',
         'titulo',      // usa 'titulo' para el título
         'archivo',     // usa 'archivo' para el path/nombre del archivo
+        'youtube_url',
         'description',
         'filetype',
         'thumbnail',

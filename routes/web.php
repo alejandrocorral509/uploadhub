@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\AudioController;
+use App\Http\Controllers\HomeController;
+
 
 
 // Rutas de autenticación (serán gestionadas por 'auth.php')
@@ -51,3 +53,9 @@ Route::post('/audios/{audio}/comments', [CommentController::class, 'store'])
 
 
  Route::post('/audios/{audio}/like', [AudioController::class, 'toggleLike'])->middleware('auth')->name('audios.like');
+
+Route::get('/audios/create', [AudioController::class, 'create'])->name('audios.create');
+Route::post('/audios', [AudioController::class, 'store'])->name('audios.store');
+
+Route::get('/audios/upload', [AudioController::class, 'upload'])->name('audios.upload');
+

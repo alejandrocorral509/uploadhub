@@ -10,6 +10,17 @@
         <!-- Fonts -->
         <link rel="icon" href="{{ asset('images/favICON.png') }}" type="image/png">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+            />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pb3D5S9T3tb+CYVh+6u4p5FFzZXPBoC9ip4HSIGMH+POqHMEqBx+lsC4Rdxv+Jzo0e+Md2z1bS1a30Zj+Y4Fiw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+
+
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])

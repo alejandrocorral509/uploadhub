@@ -8,8 +8,9 @@ class Category extends Model
 {
     protected $fillable = ['name'];
 
-    public function audios()
-    {
-        return $this->belongsToMany(Audio::class);
-    }
+public function audios()
+{
+    return $this->belongsToMany(Audio::class, 'audio_category'); // Ajusta el nombre de la tabla pivote si es distinto
+}
+
 }
