@@ -49,4 +49,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Likes toggle
     Route::post('/audios/{audio}/toggle-like', [AudioController::class, 'toggleLike'])->name('audios.toggle-like');
+
+    Route::get('/audios/{audio}/edit', [AudioController::class, 'edit'])->name('audios.edit');
+    Route::put('/audios/{audio}', [AudioController::class, 'update'])->name('audios.update');
+
 });

@@ -18,35 +18,131 @@ public function index(Request $request)
 {
     $user = Auth::user();
 
+    $allowedSorts = ['title', 'created_at', 'user_name', 'category_name', 'tag_name'];
+
+    // Parámetros tabla audios subidos
+    $sortUploaded = $request->input('sort_uploaded', 'created_at');
+    $directionUploaded = strtolower($request->input('direction_uploaded', 'desc')) === 'asc' ? 'asc' : 'desc';
+    if (!in_array($sortUploaded, $allowedSorts)) {
+        $sortUploaded = 'created_at';
+    }
+
+    $categoryUploaded = $request->input('category_uploaded');
+    $searchUploaded = $request->input('search_uploaded');
+
+    // Parámetros tabla audios favoritos
+    $sortLiked = $request->input('sort_liked', 'created_at');
+    $directionLiked = strtolower($request->input('direction_liked', 'desc')) === 'asc' ? 'asc' : 'desc';
+    if (!in_array($sortLiked, $allowedSorts)) {
+        $sortLiked = 'created_at';
+    }
+
+    $categoryLiked = $request->input('category_liked');
+    $searchLiked = $request->input('search_liked');
+
+    // Query audios subidos
     $query = Audio::where('user_id', $user->id)
         ->with(['categories', 'tags', 'likes', 'user']);
 
-    // Filtrar por categoría
-    if ($request->filled('category')) {
-        $categoryId = $request->input('category');
-        $query->whereHas('categories', function($q) use ($categoryId) {
-            $q->where('categories.id', $categoryId);
+    // Aplicar filtros subidos
+    if ($categoryUploaded) {
+        $query->whereHas('categories', function ($q) use ($categoryUploaded) {
+            $q->where('categories.id', $categoryUploaded);
+        });
+    }
+    if ($searchUploaded) {
+        $query->where(function ($q) use ($searchUploaded) {
+            $q->where('title', 'like', "%$searchUploaded%")
+              ->orWhere('description', 'like', "%$searchUploaded%");
         });
     }
 
-    // Filtrar por búsqueda en título o descripción
-    if ($request->filled('search')) {
-        $search = $request->input('search');
-        $query->where(function($q) use ($search) {
-            $q->where('title', 'like', "%$search%")
-              ->orWhere('description', 'like', "%$search%");
+    // Ordenación subidos
+    switch ($sortUploaded) {
+        case 'user_name':
+            $query->join('users', 'audios.user_id', '=', 'users.id')
+                  ->orderBy('users.name', $directionUploaded)
+                  ->select('audios.*');
+            break;
+
+        case 'category_name':
+            $query->orderBy(
+                Category::select('name')
+                    ->join('audio_category', 'categories.id', '=', 'audio_category.category_id')
+                    ->whereColumn('audio_category.audio_id', 'audios.id')
+                    ->limit(1),
+                $directionUploaded
+            );
+            break;
+
+        case 'tag_name':
+            $query->orderBy(
+                Tag::select('name')
+                    ->join('audio_tag', 'tags.id', '=', 'audio_tag.tag_id')
+                    ->whereColumn('audio_tag.audio_id', 'audios.id')
+                    ->limit(1),
+                $directionUploaded
+            );
+            break;
+
+        default:
+            $query->orderBy($sortUploaded, $directionUploaded);
+    }
+
+    $audios = $query->distinct()->get();
+
+    // Query audios favoritos
+    $likedQuery = $user->likedAudios()->with(['categories', 'tags', 'user']);
+
+    // Aplicar filtros favoritos
+    if ($categoryLiked) {
+        $likedQuery->whereHas('categories', function ($q) use ($categoryLiked) {
+            $q->where('categories.id', $categoryLiked);
+        });
+    }
+    if ($searchLiked) {
+        $likedQuery->where(function ($q) use ($searchLiked) {
+            $q->where('title', 'like', "%$searchLiked%")
+              ->orWhere('description', 'like', "%$searchLiked%");
         });
     }
 
-    $audios = $query->latest()->get();
+    // Ordenación favoritos
+    switch ($sortLiked) {
+        case 'user_name':
+            $likedQuery->join('users', 'audios.user_id', '=', 'users.id')
+                       ->orderBy('users.name', $directionLiked)
+                       ->select('audios.*');
+            break;
 
-    // Audios que el usuario ha marcado como "Me gusta"
-    $likedAudios = $user->likedAudios()->with(['categories', 'tags', 'user'])->latest()->get();
+        case 'category_name':
+            $likedQuery->orderBy(
+                Category::select('name')
+                    ->join('audio_category', 'categories.id', '=', 'audio_category.category_id')
+                    ->whereColumn('audio_category.audio_id', 'audios.id')
+                    ->limit(1),
+                $directionLiked
+            );
+            break;
 
-    // Total audios subidos
+        case 'tag_name':
+            $likedQuery->orderBy(
+                Tag::select('name')
+                    ->join('audio_tag', 'tags.id', '=', 'audio_tag.tag_id')
+                    ->whereColumn('audio_tag.audio_id', 'audios.id')
+                    ->limit(1),
+                $directionLiked
+            );
+            break;
+
+        default:
+            $likedQuery->orderBy($sortLiked, $directionLiked);
+    }
+
+    $likedAudios = $likedQuery->distinct()->get();
+
     $totalAudios = Audio::where('user_id', $user->id)->count();
 
-    // Total likes recibidos en todos los audios del usuario
     $totalLikes = Audio::where('user_id', $user->id)
         ->withCount('likes')
         ->get()
@@ -54,8 +150,17 @@ public function index(Request $request)
 
     $categories = Category::orderBy('name')->get();
 
-    return view('dashboard', compact('audios', 'likedAudios', 'categories', 'totalAudios', 'totalLikes'));
+    return view('dashboard', compact(
+        'audios', 'likedAudios', 'categories', 'totalAudios', 'totalLikes', 
+        'sortUploaded', 'directionUploaded', 'sortLiked', 'directionLiked',
+        'categoryUploaded', 'searchUploaded', 'categoryLiked', 'searchLiked'
+    ));
 }
+
+
+
+
+
 
 
 
@@ -214,6 +319,23 @@ public function download(Audio $audio)
         $audio->title . '.' . pathinfo($audio->filepath, PATHINFO_EXTENSION)
     );
 }
+
+public function edit(Audio $audio)
+{
+    // Verificar si el usuario es el dueño del archivo
+    if ($audio->user_id !== Auth::id()) {
+        abort(403);
+    }
+
+    // Obtener las categorías y etiquetas relacionadas con el audio
+    $categories = Category::all();
+    $tags = $audio->tags->pluck('name')->implode(', ');
+
+    // Pasar los datos al formulario de edición
+    return view('audios.edit', compact('audio', 'categories', 'tags'));
+}
+
+
 
     
 }
