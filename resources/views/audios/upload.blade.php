@@ -46,12 +46,22 @@
                     onsubmit="return validarFormulario()"
                     x-data="{
                         selectedCategories: {{ json_encode(old('categories', [])) }},
+                        submitting: false,
                         toggleCategory(id) {
                             this.selectedCategories = this.selectedCategories.includes(id) 
                                 ? this.selectedCategories.filter(i => i !== id) 
                                 : [id]; // Solo una categoría activa
+                        },
+                        handleSubmit(e) {
+                            if (this.submitting) {
+                                e.preventDefault();
+                                return false;
+                            }
+                            this.submitting = true;
+                            return true;
                         }
                     }"
+                    @submit.prevent="handleSubmit($event) && $el.submit()"
                 >
                     @csrf
 
@@ -217,15 +227,15 @@
                     </div>
 
                     {{-- Botón enviar --}}
+                        <button
+                            type="submit"
+                            :disabled="submitting"
+                            class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-md shadow-md
+                                hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span x-text="submitting ? 'Subiendo...' : 'Subir Archivo / Video'"></span>
+                        </button>
 
-
-                    <button
-                        type="submit"
-                        class="w-full py-3 bg-indigo-600 text-white font-semibold rounded-md shadow-md
-                               hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150"
-                    >
-                        Subir Archivo / Video
-                    </button>
                 </form>
             </div>
         </div>
@@ -259,54 +269,53 @@
 
     {{-- Script validar formulario con SweetAlert2 --}}
     <script>
-function validarFormulario() {
-    const title = document.getElementById('title').value.trim();
-    const audioInput = document.getElementById('audio');
-    const audio = audioInput.files.length;
-    const youtubeUrl = document.getElementById('youtube_url').value.trim();
+    function validarFormulario() {
+        const title = document.getElementById('title').value.trim();
+        const audioInput = document.getElementById('audio');
+        const audio = audioInput.files.length;
+        const youtubeUrl = document.getElementById('youtube_url').value.trim();
 
-    // Obtener las categorías seleccionadas (input hidden)
-    const selectedCategories = document.querySelectorAll('input[name="categories[]"]');
-    
-    if (!title) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Título requerido',
-            text: 'Por favor, introduce un título.',
-        });
-        return false;
+        // Obtener las categorías seleccionadas (input hidden)
+        const selectedCategories = document.querySelectorAll('input[name="categories[]"]');
+        
+        if (!title) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Título requerido',
+                text: 'Por favor, introduce un título.',
+            });
+            return false;
+        }
+
+        if (!audio && !youtubeUrl) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Archivo o enlace requerido',
+                text: 'Por favor, selecciona un archivo o pega un enlace de YouTube.',
+            });
+            return false;
+        }
+
+        if (selectedCategories.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Categoría requerida',
+                text: 'Por favor, selecciona al menos una categoría.',
+            });
+            return false;
+        }
+
+        if (youtubeUrl && !/^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/.test(youtubeUrl)) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Enlace inválido',
+                text: 'Por favor, introduce un enlace válido de YouTube.',
+            });
+            return false;
+        }
+
+        return true;
     }
-
-    if (!audio && !youtubeUrl) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Archivo o enlace requerido',
-            text: 'Por favor, selecciona un archivo o pega un enlace de YouTube.',
-        });
-        return false;
-    }
-
-    if (selectedCategories.length === 0) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Categoría requerida',
-            text: 'Por favor, selecciona al menos una categoría.',
-        });
-        return false;
-    }
-
-    if (youtubeUrl && !/^https?:\/\/(www\.)?youtube\.com\/watch\?v=[\w-]+/.test(youtubeUrl)) {
-        Swal.fire({
-            icon: 'error',
-            title: 'Enlace inválido',
-            text: 'Por favor, introduce un enlace válido de YouTube.',
-        });
-        return false;
-    }
-
-    return true;
-}
-
     </script>
 
     {{-- Remix Icons CDN --}}

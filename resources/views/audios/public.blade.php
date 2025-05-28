@@ -216,14 +216,15 @@
                     @endforeach
                 </div>
 
-                <div class="mt-6">
-                    {{ $audios->withQueryString()->links() }}
-                </div>
             @else
                 <p class="text-center text-gray-500 text-sm">No hay audios disponibles para los filtros seleccionados.</p>
             @endif
 
         </div>
+        <div class="mt-6">
+            {{ $audios->withQueryString()->links() }}
+        </div>
+
     </div>
 
     <script>

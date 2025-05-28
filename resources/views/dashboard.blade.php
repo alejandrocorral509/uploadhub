@@ -49,15 +49,22 @@
                         $sortParam = 'sort_' . $table;
                         $dirParam = 'direction_' . $table;
 
+                        // Detectar parámetro de página según tabla para mantenerlo
+                        $pageParam = $table === 'uploaded' ? 'page_subidos' : 'page_favoritos';
+                        $currentPage = request()->input($pageParam, 1);
+
                         $direction = 'asc';
                         if(request($sortParam) === $column && request($dirParam) === 'asc') {
                             $direction = 'desc';
                         }
 
-                        return route('dashboard', array_merge(request()->all(), [
-                            $sortParam => $column,
-                            $dirParam => $direction
-                        ]));
+                        // Construir query manteniendo la página de la tabla correspondiente
+                        $query = request()->all();
+                        $query[$sortParam] = $column;
+                        $query[$dirParam] = $direction;
+                        $query[$pageParam] = $currentPage;
+
+                        return route('dashboard', $query);
                     }
                 @endphp
 
@@ -84,10 +91,10 @@
                             @endforeach
                         </select>
 
-                        <input 
-                            type="search" 
-                            name="search_uploaded" 
-                            placeholder="Buscar en audios subidos" 
+                        <input
+                            type="search"
+                            name="search_uploaded"
+                            placeholder="Buscar en audios subidos"
                             class="border rounded px-3 py-1 flex-grow"
                             value="{{ request('search_uploaded') ?? '' }}"
                             onkeypress="if(event.key === 'Enter') this.form.submit();"
@@ -181,6 +188,17 @@
                             @endforelse
                         </tbody>
                     </table>
+                    @if ($audios->hasPages())
+                    <nav class="flex space-x-2 text-sm text-gray-700 justify-end py-2 mr-6">
+                        @foreach ($audios->getUrlRange(1, $audios->lastPage()) as $page => $url)
+                            @if ($page == $audios->currentPage())
+                                <span class="font-semibold text-purple-600">{{ $page }}</span>
+                            @else
+                                <a href="{{ $url }}" class="hover:text-purple-600">{{ $page }}</a>
+                            @endif
+                        @endforeach
+                    </nav>
+                    @endif
                 </section>
 
                 {{-- Formulario filtro y búsqueda para audios favoritos --}}
@@ -188,9 +206,9 @@
                     <h3 class="text-lg font-semibold mb-2 text-gray-900 flex items-center border-b border-gray-300 pb-1">
                         Tus archivos favoritos
                         <svg xmlns="http://www.w3.org/2000/svg" class="ml-1 h-5 w-5 text-purple-600" fill="currentColor" viewBox="0 0 24 24" stroke="none">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 
-                                    4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81 
-                                    14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 
+                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42
+                                    4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09C13.09 3.81
+                                    14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4
                                     6.86-8.55 11.54L12 21.35z" />
                         </svg>
                     </h3>
@@ -209,10 +227,10 @@
                             @endforeach
                         </select>
 
-                        <input 
-                            type="search" 
-                            name="search_liked" 
-                            placeholder="Buscar en audios favoritos" 
+                        <input
+                            type="search"
+                            name="search_liked"
+                            placeholder="Buscar en audios favoritos"
                             class="border rounded px-3 py-1 flex-grow"
                             value="{{ request('search_liked') ?? '' }}"
                             onkeypress="if(event.key === 'Enter') this.form.submit();"
@@ -305,6 +323,18 @@
                             @endforelse
                         </tbody>
                     </table>
+                    @if ($likedAudios->hasPages())
+                    <nav class="flex space-x-2 text-sm text-gray-700 justify-end py-2">
+                        @foreach ($likedAudios->getUrlRange(1, $likedAudios->lastPage()) as $page => $url)
+                            @if ($page == $likedAudios->currentPage())
+                                <span class="font-semibold text-purple-600">{{ $page }}</span>
+                            @else
+                                <a href="{{ $url }}" class="hover:text-purple-600">{{ $page }}</a>
+                            @endif
+                        @endforeach
+                    </nav>
+                    @endif
+
                 </section>
 
             </div>
