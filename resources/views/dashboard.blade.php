@@ -390,25 +390,25 @@
 
         });
         document.querySelectorAll('.edit-audio-btn').forEach(button => {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
-                const url = this.dataset.url;
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            const url = this.dataset.url;
 
-                Swal.fire({
-                    title: '¿Quieres editar este audio?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Sí, editar',
-                    cancelButtonText: 'Cancelar',
-                    confirmButtonColor: '#3085d6',
-                    cancelButtonColor: '#aaa',
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = url;
-                    }
-                });
+            Swal.fire({
+                title: '¿Quieres editar este audio?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, editar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#aaa',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = url;
+                }
             });
         });
+    });
 
         </script>
 
