@@ -54,12 +54,13 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
-                            <x-dropdown-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();">
+                            <x-dropdown-link href="#" onclick="confirmLogout(event)">
                                 Cerrar sesión
                             </x-dropdown-link>
                         </form>
+
                     </x-slot>
                 </x-dropdown>
             </div>
@@ -123,11 +124,44 @@
     </div>
 
     <script>
-        // Al cargar la página, aplicar modo oscuro en <html> según localStorage
-        if(localStorage.getItem('dark') === 'true') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+function confirmLogout(event) {
+    event.preventDefault(); // Evita el submit normal
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "¿Quieres cerrar sesión?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#4F46E5', // Indigo 600
+        cancelButtonColor: '#6B7280',  // Gray 500
+        confirmButtonText: 'Sí, cerrar sesión',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('logout-form').submit();
         }
-    </script>
+    });
+}
+
+function confirmLogoutMobile(event) {
+    event.preventDefault();
+    Swal.fire({
+        title: '¿Estás seguro?',
+        text: "¿Quieres cerrar sesión?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#4F46E5',
+        cancelButtonColor: '#6B7280',
+        confirmButtonText: 'Sí, cerrar sesión',
+        cancelButtonText: 'Cancelar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('logout-form-mobile').submit();
+        }
+    });
+}
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
 </nav>
