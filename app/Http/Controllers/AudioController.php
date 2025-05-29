@@ -60,12 +60,14 @@ class AudioController extends Controller
         // Ordenación subidos
         switch ($sortUploaded) {
             case 'user_name':
+                // Mejor usar join para ordenar, pero evitando duplicados
                 $query->join('users', 'audios.user_id', '=', 'users.id')
-                      ->orderBy('users.name', $directionUploaded)
-                      ->select('audios.*');
+                    ->orderBy('users.name', $directionUploaded)
+                    ->select('audios.*');
                 break;
 
             case 'category_name':
+                // Ordenar usando subconsulta para evitar joins que distorsionan la paginación
                 $query->orderBy(
                     Category::select('name')
                         ->join('audio_category', 'categories.id', '=', 'audio_category.category_id')
@@ -88,6 +90,10 @@ class AudioController extends Controller
             default:
                 $query->orderBy($sortUploaded, $directionUploaded);
         }
+
+// Paginación asegurando que se aplica a la consulta filtrada y ordenada correctamente
+$audios = $query->distinct('audios.id')->paginate(5, ['*'], 'page_subidos')->withQueryString();
+
 
         // PAGINACIÓN audios subidos (cambiado nombre parámetro página)
         $audios = $query->distinct()->paginate(5, ['*'], 'page_subidos')->withQueryString();
@@ -112,8 +118,8 @@ class AudioController extends Controller
         switch ($sortLiked) {
             case 'user_name':
                 $likedQuery->join('users', 'audios.user_id', '=', 'users.id')
-                           ->orderBy('users.name', $directionLiked)
-                           ->select('audios.*');
+                        ->orderBy('users.name', $directionLiked)
+                        ->select('audios.*');
                 break;
 
             case 'category_name':
@@ -139,6 +145,9 @@ class AudioController extends Controller
             default:
                 $likedQuery->orderBy($sortLiked, $directionLiked);
         }
+
+$likedAudios = $likedQuery->distinct('audios.id')->paginate(5, ['*'], 'page_favoritos')->withQueryString();
+
 
         // PAGINACIÓN audios favoritos (cambiado nombre parámetro página)
         $likedAudios = $likedQuery->distinct()->paginate(5, ['*'], 'page_favoritos')->withQueryString();
@@ -266,6 +275,88 @@ public function store(Request $request)
         return view('audios.public', compact('audios', 'categories'));
     }
 
+    public function update(Request $request, Audio $audio)
+{
+    // Comprobar que el audio pertenece al usuario autenticado
+    if ($audio->user_id !== Auth::id()) {
+        abort(403);
+    }
+
+    // Validar los datos
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'audio' => 'nullable|file|mimes:mp3,wav,m4a,mp4,ogg|max:51200',
+        'youtube_url' => ['nullable', 'url', 'regex:#^(https?://)?(www\.youtube\.com|youtu\.?be)/.+$#'],
+        'description' => 'nullable|string',
+        'privacy' => 'required|in:public,private',
+        'categories' => 'required|array|min:1',
+        'categories.*' => 'exists:categories,id',
+        'tags' => 'nullable|string',
+        'cover' => 'nullable|image|max:5120',
+    ]);
+
+    // Actualizar campos
+    $audio->title = $request->input('title');
+    $audio->description = $request->input('description');
+    $audio->privacy = $request->input('privacy');
+
+    // Actualizar fichero de audio si se sube uno nuevo
+    if ($request->hasFile('audio')) {
+        // Eliminar archivo anterior si existía
+        if ($audio->filepath) {
+            Storage::disk('public')->delete($audio->filepath);
+        }
+        $file = $request->file('audio');
+        $audio->filepath = $file->store('audios', 'public');
+        $audio->filetype = $file->getClientMimeType();
+        // Quitar youtube_url si se sube un audio nuevo
+        $audio->youtube_url = null;
+    } elseif ($request->filled('youtube_url')) {
+        // Actualizar URL de YouTube y borrar archivo si existía
+        if ($audio->filepath) {
+            Storage::disk('public')->delete($audio->filepath);
+            $audio->filepath = null;
+            $audio->filetype = null;
+        }
+        $audio->youtube_url = $request->input('youtube_url');
+        $audio->filetype = 'youtube';
+    }
+
+    // Actualizar portada si se sube nueva imagen
+    if ($request->hasFile('cover')) {
+        if ($audio->cover) {
+            Storage::disk('public')->delete($audio->cover);
+        }
+        $audio->cover = $request->file('cover')->store('covers', 'public');
+    }
+
+    $audio->save();
+
+    // Actualizar categorías
+    if ($request->has('categories')) {
+        $audio->categories()->sync($request->input('categories'));
+    }
+
+    // Actualizar etiquetas (tags)
+    if ($request->has('tags')) {
+        $tags = collect(explode(',', $request->input('tags')))
+            ->map(fn($tag) => trim($tag))
+            ->filter()
+            ->unique();
+
+        $tagIds = $tags->map(fn($tagName) => Tag::firstOrCreate(['name' => $tagName])->id);
+
+        $audio->tags()->sync($tagIds);
+    } else {
+        // Si no hay tags, desvincular todos
+        $audio->tags()->sync([]);
+    }
+
+    return redirect()->route('dashboard')->with('success', 'Audio actualizado correctamente.');
+}
+
+
+
     public function upload()
     {
         $categories = Category::all();
@@ -295,24 +386,32 @@ public function store(Request $request)
 
 public function download(Audio $audio)
 {
-    $userId = auth()->id();
-
-    // Comprobar permisos: si es privado y no es propietario, bloquear acceso
-    if ($audio->privacy === 'private' && $audio->user_id !== $userId) {
-        abort(403, 'No tienes permiso para descargar este archivo.');
+    if (!$audio->filepath) {
+        abort(404, 'Este audio no tiene archivo para descargar.');
     }
 
-    // Verificar que el archivo exista en el disco
-    if (!$audio->filepath || !Storage::disk('public')->exists($audio->filepath)) {
+    if (!Storage::disk('public')->exists($audio->filepath)) {
         abort(404, 'Archivo no encontrado.');
     }
 
-    // Descargar el archivo con nombre amigable: título + extensión original
+    // Comprobar extensión
+    $extension = strtolower(pathinfo($audio->filepath, PATHINFO_EXTENSION));
+
+    if ($extension !== 'mp3') {
+        abort(403, 'Este archivo no es compatible con la descarga.');
+    }
+
+    // Sanear título para nombre de archivo
+    $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $audio->title);
+
     return Storage::disk('public')->download(
         $audio->filepath,
-        $audio->title . '.' . pathinfo($audio->filepath, PATHINFO_EXTENSION)
+        $safeTitle . '.' . $extension
     );
 }
+
+
+
 
 public function edit(Audio $audio)
 {

@@ -166,19 +166,22 @@
                                     </td>
                                     <td class="px-4 py-2 whitespace-nowrap text-gray-500">{{ $audio->created_at->format('Y-m-d') }}</td>
                                     <td class="px-4 py-2 whitespace-nowrap">
-                                        <form action="{{ route('audios.edit', $audio) }}" method="GET" class="inline-block">
-                                            @csrf
-                                            <button type="submit" class="text-blue-600 hover:text-blue-900 font-semibold rounded px-2 py-1 transition duration-150">
+                                            <button
+                                                type="button"
+                                                class="text-blue-600 hover:text-blue-900 font-semibold rounded px-2 py-1 transition duration-150 edit-audio-btn"
+                                                data-url="{{ route('audios.edit', $audio) }}"
+                                            >
                                                 Editar
                                             </button>
-                                        </form>
-                                        <form action="{{ route('audios.destroy', $audio) }}" method="POST" onsubmit="return confirm('¿Eliminar este audio/video?');" class="inline-block">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900 font-semibold rounded px-2 py-1 transition duration-150">
-                                                Eliminar
-                                            </button>
-                                        </form>
+
+                                            <form action="{{ route('audios.destroy', $audio) }}" method="POST" class="inline-block delete-audio-form">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="text-red-600 hover:text-red-900 font-semibold rounded px-2 py-1 transition duration-150 delete-audio-btn">
+                                                    Eliminar
+                                                </button>
+                                            </form>
+
                                     </td>
                                 </tr>
                             @empty
@@ -345,4 +348,69 @@
     <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet" />
 
     <script src="//unpkg.com/alpinejs" defer></script>
+    {{-- SweetAlert2 CDN --}}
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Confirmación SweetAlert para eliminar audio
+            document.querySelectorAll('.delete-audio-btn').forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const form = this.closest('form');
+
+                    Swal.fire({
+                        title: '¿Estás seguro?',
+                        text: "No podrás revertir esta acción.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Sí, eliminar',
+                        cancelButtonText: 'Cancelar'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            // Mostrar SweetAlert de éxito si hay mensaje en sesión
+            @if(session('success'))
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Éxito!',
+                    text: "{{ session('success') }}",
+                    timer: 2500,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                });
+            @endif
+
+        });
+        document.querySelectorAll('.edit-audio-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const url = this.dataset.url;
+
+                Swal.fire({
+                    title: '¿Quieres editar este audio?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, editar',
+                    cancelButtonText: 'Cancelar',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#aaa',
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = url;
+                    }
+                });
+            });
+        });
+
+        </script>
+
+    
 </x-app-layout>

@@ -1,5 +1,4 @@
-<nav x-data="{ open: false, dark: localStorage.getItem('dark') === 'true' }" 
-     :class="{ 'dark': dark }" 
+<nav x-data="{ open: false, dark: localStorage.getItem('dark') === 'true' }"
      class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50 dark:bg-gray-900 dark:border-gray-700 transition-colors duration-300">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,42 +14,30 @@
 
             {{-- Navegación centrada --}}
             <div class="hidden sm:flex items-center gap-8">
-                <x-nav-link :href="route('audios.public')" :active="request()->routeIs('audios.public')" 
-                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 
+                <x-nav-link :href="route('audios.public')" :active="request()->routeIs('audios.public')"
+                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400
                                 transition duration-150 flex items-center gap-2">
                     <i class="fa-solid fa-house text-lg"></i>
                     <span>Inicio</span>
                 </x-nav-link>
 
-                <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" 
-                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 
+                <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')"
+                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400
                                 transition duration-150 flex items-center gap-2">
-                    <i class="fa-solid fa-book text-lg"></i>                        
+                    <i class="fa-solid fa-book text-lg"></i>
                     <span>Tu biblioteca</span>
                 </x-nav-link>
 
-                <x-nav-link :href="route('audios.upload')" 
-                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 
+                <x-nav-link :href="route('audios.upload')"
+                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400
                                 transition duration-150 flex items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>                    
+                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
                     <span>Subir archivos</span>
                 </x-nav-link>
             </div>
             {{-- Dark mode toggle + usuario + botón subir audio --}}
             <div class="hidden sm:flex sm:items-center sm:space-x-4 flex-shrink-0">
-                {{-- Dark mode --}}
-                <button
-                    @click="dark = !dark; localStorage.setItem('dark', dark); document.documentElement.classList.toggle('dark', dark)"
-                    class="p-2 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
-                    :aria-label="dark ? 'Modo claro' : 'Modo oscuro'"
-                    title="Alternar modo oscuro">
-                    <template x-if="!dark">
-                        <i class="fas fa-sun h-6 w-6"></i>
-                    </template>
-                    <template x-if="dark">
-                        <i class="fas fa-moon h-6 w-6"></i>
-                    </template>
-                </button>
+                {{-- Dark mode --}
 
                 {{-- Dropdown usuario --}}
                 <x-dropdown align="right" width="72">
@@ -136,6 +123,7 @@
     </div>
 
     <script>
+        // Al cargar la página, aplicar modo oscuro en <html> según localStorage
         if(localStorage.getItem('dark') === 'true') {
             document.documentElement.classList.add('dark');
         } else {

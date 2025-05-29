@@ -37,10 +37,27 @@
             @if($audios->count())
                 <div class="space-y-5">
                     @foreach($audios as $audio)
-                        <article class="border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow duration-150 flex gap-4">
-                                @if ($audio->cover)
-                                    <img src="{{ asset('storage/' . $audio->cover) }}" alt="Portada {{ $audio->title }}" class="w-24 h-24 object-cover rounded-md shadow-sm flex-shrink-0">
-                                @endif
+                        <article class="relative border border-gray-200 rounded-md p-4 hover:shadow-md transition-shadow duration-150 flex gap-4">
+                            <!-- Botón compartir -->
+                            <button
+                                class="share-btn absolute top-2 right-2 text-gray-500 hover:text-indigo-600 focus:outline-none"
+                                data-audio-id="{{ $audio->id }}"
+                                data-type="{{ $audio->youtube_url ? 'youtube' : 'audio' }}"
+                                data-url="{{ $audio->youtube_url ? $audio->youtube_url : asset('storage/' . $audio->filepath) }}"
+                                title="Compartir {{ $audio->title }}"
+                            >
+                                <i class="fas fa-share-alt fa-lg"></i>
+                            </button>
+                            <div class="share-menu absolute top-8 right-2 bg-white border border-gray-300 rounded shadow-md p-2 hidden z-50 text-sm" data-audio-id="{{ $audio->id }}">
+                                <button class="share-whatsapp block w-full text-left px-2 py-1 hover:bg-gray-100">WhatsApp</button>
+                                <button class="share-gmail block w-full text-left px-2 py-1 hover:bg-gray-100">Gmail</button>
+                                <button class="share-copy block w-full text-left px-2 py-1 hover:bg-gray-100">Copiar enlace</button>
+                            </div>
+
+                            {{-- Imagen de portada --}}
+                            @if ($audio->cover)
+                                <img src="{{ asset('storage/' . $audio->cover) }}" alt="Portada {{ $audio->title }}" class="w-24 h-24 object-cover rounded-md shadow-sm flex-shrink-0">
+                            @endif
                             <div class="flex-grow">
                                 <header class="mb-1">
                                     <h2 class="font-semibold text-lg text-gray-800 truncate">{{ $audio->title }}</h2>
@@ -126,15 +143,17 @@
                                             Tu navegador no soporta la reproducción de audio.
                                         </audio>
 
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="100"
-                                            value="0"
-                                            class="progress-bar flex-grow h-1 rounded-lg cursor-pointer bg-indigo-300"
-                                            data-audio-id="audio-{{ $audio->id }}"
-                                            aria-label="Barra de progreso"
-                                        />
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        step="0.1"
+                                        value="0"
+                                        class="progress-bar flex-grow h-1 rounded-lg cursor-pointer bg-indigo-300"
+                                        data-audio-id="audio-{{ $audio->id }}"
+                                        aria-label="Barra de progreso"
+                                    />
+
 
                                         {{-- Volumen control --}}
                                         <button
@@ -229,80 +248,94 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const players = document.querySelectorAll('audio');
+                const players = document.querySelectorAll('audio');
 
-            players.forEach(audio => {
-                const id = audio.id;
-                const playPauseBtn = document.querySelector(`button.play-pause-btn[data-audio-id="${id}"]`);
-                const progressBar = document.querySelector(`input.progress-bar[data-audio-id="${id}"]`);
-                const volumeToggleBtn = document.querySelector(`button.volume-toggle-btn[data-audio-id="${id}"]`);
-                const volumeSlider = document.querySelector(`input.volume-slider[data-audio-id="${id}"]`);
+                players.forEach(audio => {
+                    const id = audio.id;
+                    const playPauseBtn = document.querySelector(`button.play-pause-btn[data-audio-id="${id}"]`);
+                    const progressBar = document.querySelector(`input.progress-bar[data-audio-id="${id}"]`);
+                    const volumeToggleBtn = document.querySelector(`button.volume-toggle-btn[data-audio-id="${id}"]`);
+                    const volumeSlider = document.querySelector(`input.volume-slider[data-audio-id="${id}"]`);
 
-                // Actualizar barra de progreso
-                audio.addEventListener('timeupdate', () => {
-                    if (audio.duration) {
-                        const progressPercent = (audio.currentTime / audio.duration) * 100;
-                        progressBar.value = progressPercent;
-                    }
-                });
+                    let isSeeking = false;
 
-                // Play / pause
-                playPauseBtn.addEventListener('click', () => {
-                    if (audio.paused) {
-                        players.forEach(p => { if (p !== audio) p.pause(); });
-                        audio.play();
-                        playPauseBtn.querySelector('.fa-play').classList.add('hidden');
-                        playPauseBtn.querySelector('.fa-pause').classList.remove('hidden');
-                    } else {
-                        audio.pause();
+                    progressBar.addEventListener('mousedown', () => {
+                        isSeeking = true;
+                        if (!audio.readyState) {
+                            audio.load();
+                        }
+                    });
+
+                    progressBar.addEventListener('mouseup', () => {
+                        if (audio.duration) {
+                            audio.currentTime = (progressBar.value / 100) * audio.duration;
+                        }
+                        isSeeking = false;
+                    });
+
+                    audio.addEventListener('loadedmetadata', () => {
+                        progressBar.max = 100; // redundante pero seguro
+                        progressBar.value = 0;
+                    });
+
+                    // Actualizar barra sólo si no estás arrastrando
+                    audio.addEventListener('timeupdate', () => {
+                        if (!isSeeking && audio.duration) {
+                            const progressPercent = (audio.currentTime / audio.duration) * 100;
+                            progressBar.value = progressPercent;
+                        }
+                    });
+
+                    // Play / pause
+                    playPauseBtn.addEventListener('click', () => {
+                        if (audio.paused) {
+                            players.forEach(p => { if (p !== audio) p.pause(); });
+                            audio.play();
+                            playPauseBtn.querySelector('.fa-play').classList.add('hidden');
+                            playPauseBtn.querySelector('.fa-pause').classList.remove('hidden');
+                        } else {
+                            audio.pause();
+                            playPauseBtn.querySelector('.fa-play').classList.remove('hidden');
+                            playPauseBtn.querySelector('.fa-pause').classList.add('hidden');
+                        }
+                    });
+
+                    // Volumen slider
+                    volumeSlider.addEventListener('input', () => {
+                        audio.volume = volumeSlider.value / 100;
+                        if (audio.volume === 0) {
+                            volumeToggleBtn.querySelector('.volume-on-icon').classList.add('hidden');
+                            volumeToggleBtn.querySelector('.volume-off-icon').classList.remove('hidden');
+                        } else {
+                            volumeToggleBtn.querySelector('.volume-on-icon').classList.remove('hidden');
+                            volumeToggleBtn.querySelector('.volume-off-icon').classList.add('hidden');
+                        }
+                    });
+
+                    // Mute / unmute toggle
+                    volumeToggleBtn.addEventListener('click', () => {
+                        if (audio.volume > 0) {
+                            audio.dataset.lastVolume = audio.volume;
+                            audio.volume = 0;
+                            volumeSlider.value = 0;
+                            volumeToggleBtn.querySelector('.volume-on-icon').classList.add('hidden');
+                            volumeToggleBtn.querySelector('.volume-off-icon').classList.remove('hidden');
+                        } else {
+                            const lastVol = audio.dataset.lastVolume ?? 1;
+                            audio.volume = lastVol;
+                            volumeSlider.value = lastVol * 100;
+                            volumeToggleBtn.querySelector('.volume-on-icon').classList.remove('hidden');
+                            volumeToggleBtn.querySelector('.volume-off-icon').classList.add('hidden');
+                        }
+                    });
+
+                    // Cuando termina audio
+                    audio.addEventListener('ended', () => {
                         playPauseBtn.querySelector('.fa-play').classList.remove('hidden');
                         playPauseBtn.querySelector('.fa-pause').classList.add('hidden');
-                    }
+                        progressBar.value = 0;
+                    });
                 });
-
-                // Cambiar audio con barra progreso
-                progressBar.addEventListener('input', () => {
-                    if (audio.duration) {
-                        audio.currentTime = (progressBar.value / 100) * audio.duration;
-                    }
-                });
-
-                // Volumen slider
-                volumeSlider.addEventListener('input', () => {
-                    audio.volume = volumeSlider.value / 100;
-                    if (audio.volume === 0) {
-                        volumeToggleBtn.querySelector('.volume-on-icon').classList.add('hidden');
-                        volumeToggleBtn.querySelector('.volume-off-icon').classList.remove('hidden');
-                    } else {
-                        volumeToggleBtn.querySelector('.volume-on-icon').classList.remove('hidden');
-                        volumeToggleBtn.querySelector('.volume-off-icon').classList.add('hidden');
-                    }
-                });
-
-                // Mute / unmute toggle
-                volumeToggleBtn.addEventListener('click', () => {
-                    if (audio.volume > 0) {
-                        audio.dataset.lastVolume = audio.volume;
-                        audio.volume = 0;
-                        volumeSlider.value = 0;
-                        volumeToggleBtn.querySelector('.volume-on-icon').classList.add('hidden');
-                        volumeToggleBtn.querySelector('.volume-off-icon').classList.remove('hidden');
-                    } else {
-                        const lastVol = audio.dataset.lastVolume ?? 1;
-                        audio.volume = lastVol;
-                        volumeSlider.value = lastVol * 100;
-                        volumeToggleBtn.querySelector('.volume-on-icon').classList.remove('hidden');
-                        volumeToggleBtn.querySelector('.volume-off-icon').classList.add('hidden');
-                    }
-                });
-
-                // Cuando termina audio
-                audio.addEventListener('ended', () => {
-                    playPauseBtn.querySelector('.fa-play').classList.remove('hidden');
-                    playPauseBtn.querySelector('.fa-pause').classList.add('hidden');
-                    progressBar.value = 0;
-                });
-            });
 
             // Toggle like button
             const likeButtons = document.querySelectorAll('.like-btn');
@@ -363,22 +396,116 @@
                     }
                 });
             });
-        });
-    </script>
-    @if(session('success'))
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            Swal.fire({
-                icon: 'success',
-                title: '{{ session('success') }}',
-                toast: true,
-                position: 'top-end',
-                timer: 3000,
-                timerProgressBar: true,
-                showConfirmButton: false
+
+            // Funcionalidad para abrir/cerrar menú compartir
+            const shareButtons = document.querySelectorAll('.share-btn');
+
+            shareButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+
+                    const audioId = button.dataset.audioId;
+                    const menu = document.querySelector(`.share-menu[data-audio-id="${audioId}"]`);
+
+                    // Cerrar otros menús abiertos
+                    document.querySelectorAll('.share-menu').forEach(m => {
+                        if(m !== menu) m.classList.add('hidden');
+                    });
+
+                    // Toggle menú actual
+                    menu.classList.toggle('hidden');
+                });
             });
+
+            // Cerrar menú al clicar fuera
+            document.addEventListener('click', () => {
+                document.querySelectorAll('.share-menu').forEach(menu => menu.classList.add('hidden'));
+            });
+
+            // Funcionalidad para compartir
+            document.querySelectorAll('.share-menu').forEach(menu => {
+                const audioId = menu.dataset.audioId;
+                const shareBtn = document.querySelector(`.share-btn[data-audio-id="${audioId}"]`);
+
+                const url = shareBtn.dataset.url;
+                const type = shareBtn.dataset.type;
+                const title = shareBtn.title.replace('Compartir ', '');
+
+                // WhatsApp
+                menu.querySelector('.share-whatsapp').addEventListener('click', () => {
+                    const text = type === 'youtube' 
+                        ? `Mira este vídeo en YouTube: ${url}`
+                        : `Escucha este audio: ${url}`;
+                    const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+                    window.open(whatsappUrl, '_blank');
+                    mostrarMensajeCompartir(type);
+                    menu.classList.add('hidden');
+                });
+
+                // Gmail
+                menu.querySelector('.share-gmail').addEventListener('click', () => {
+                    const subject = encodeURIComponent(`Compartir ${type === 'youtube' ? 'vídeo' : 'audio'}: ${title}`);
+                    const body = encodeURIComponent(type === 'youtube' 
+                        ? `Te comparto este vídeo de YouTube:\n${url}` 
+                        : `Te comparto este audio:\n${url}`);
+                    const mailtoUrl = `mailto:?subject=${subject}&body=${body}`;
+                    window.location.href = mailtoUrl;
+                    menu.classList.add('hidden');
+                    // No mensaje porque es abrir mailto
+                });
+
+                // Copiar enlace
+                menu.querySelector('.share-copy').addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(url);
+                        mostrarMensajeCompartir(type, true);
+                    } catch (e) {
+                        alert('No se pudo copiar el enlace.');
+                    }
+                    menu.classList.add('hidden');
+                });
+            });
+
+            function mostrarMensajeCompartir(type, copiado = false) {
+                if (copiado) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Enlace copiado al portapapeles',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2500,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: type === 'youtube' ? 'Compartido vídeo de YouTube' : 'Compartido audio',
+                        toast: true,
+                        position: 'top-end',
+                        timer: 2500,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                }
+            }
         });
     </script>
-@endif
+
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'success',
+                    title: '{{ session('success') }}',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+            });
+        </script>
+    @endif
 
 </x-app-layout>

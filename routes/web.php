@@ -26,8 +26,6 @@ Route::get('/', function () {
 
 Route::get('/audios-publicos', [AudioController::class, 'publicIndex'])->name('audios.public');
 
-Route::get('/audios/{audio}/download', [AudioController::class, 'download'])->name('audios.download');
-
 // Rutas protegidas por autenticación
 Route::middleware(['auth'])->group(function () {
     // Profile routes
@@ -49,6 +47,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Likes toggle
     Route::post('/audios/{audio}/toggle-like', [AudioController::class, 'toggleLike'])->name('audios.toggle-like');
+
+    Route::get('/audios/{audio}/download', [AudioController::class, 'download'])->name('audios.download');
 
     Route::get('/audios/{audio}/edit', [AudioController::class, 'edit'])->name('audios.edit');
     Route::put('/audios/{audio}', [AudioController::class, 'update'])->name('audios.update');
