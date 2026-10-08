@@ -10,6 +10,10 @@ class CommentController extends Controller
 {
     public function store(Request $request, Audio $audio)
     {
+        if (!$audio->isVisibleTo(Auth::user())) {
+            abort(404);
+        }
+
         $request->validate([
             'content' => 'required|string|max:1000',
         ]);

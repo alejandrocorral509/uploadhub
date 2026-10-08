@@ -43,7 +43,7 @@
                                 class="share-btn absolute top-2 right-2 text-gray-500 hover:text-indigo-600 focus:outline-none"
                                 data-audio-id="{{ $audio->id }}"
                                 data-type="{{ $audio->youtube_url ? 'youtube' : 'audio' }}"
-                                data-url="{{ $audio->youtube_url ? $audio->youtube_url : asset('storage/' . $audio->filepath) }}"
+                                data-url="{{ $audio->youtube_url ? $audio->youtube_url : route('audios.stream', $audio) }}"
                                 title="Compartir {{ $audio->title }}"
                             >
                                 <i class="fas fa-share-alt fa-lg"></i>
@@ -139,7 +139,7 @@
                                         </button>
 
                                         <audio id="audio-{{ $audio->id }}" preload="none" class="flex-grow rounded bg-gray-100" style="height: 32px;">
-                                            <source src="{{ asset('storage/' . $audio->filepath) }}" type="{{ $audio->filetype }}">
+                                            <source src="{{ route('audios.stream', $audio) }}" type="{{ $audio->filetype }}">
                                             Tu navegador no soporta la reproducción de audio.
                                         </audio>
 
@@ -184,7 +184,7 @@
                                     </div>
                                 @elseif (Str::startsWith($audio->filetype, 'video'))
                                     <video controls class="w-full rounded-md" preload="metadata" style="max-height: 180px;">
-                                        <source src="{{ asset('storage/' . $audio->filepath) }}" type="{{ $audio->filetype }}">
+                                        <source src="{{ route('audios.stream', $audio) }}" type="{{ $audio->filetype }}">
                                         Tu navegador no soporta la reproducción de video.
                                     </video>
                                 @endif

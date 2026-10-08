@@ -26,6 +26,9 @@ Route::get('/', function () {
 
 Route::get('/audios-publicos', [AudioController::class, 'publicIndex'])->name('audios.public');
 
+// Reproducción: pública para audios públicos, solo el dueño para los privados (se comprueba en el controlador)
+Route::get('/audios/{audio}/stream', [AudioController::class, 'stream'])->name('audios.stream');
+
 // Rutas protegidas por autenticación
 Route::middleware(['auth'])->group(function () {
     // Profile routes
@@ -39,7 +42,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/audios', [AudioController::class, 'store'])->name('audios.store');
     Route::delete('/audios/{audio}', [AudioController::class, 'destroy'])->name('audios.destroy');
 
-    Route::get('/audios/create', [AudioController::class, 'create'])->name('audios.create');
     Route::get('/audios/upload', [AudioController::class, 'upload'])->name('audios.upload');
 
     // Comentarios

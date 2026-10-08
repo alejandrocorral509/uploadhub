@@ -193,7 +193,8 @@ public function store(Request $request)
 
     if ($request->hasFile('audio')) {
         $file = $request->file('audio');
-        $filepath = $file->store('audios', 'public');
+        // Disco privado: el archivo solo se sirve a través de la ruta audios.stream
+        $filepath = $file->store('audios', 'local');
         $filetype = $file->getClientMimeType();
     }
 
@@ -241,9 +242,7 @@ public function store(Request $request)
             abort(403);
         }
 
-        if ($audio->filepath) { // cambiado de 'archivo' a 'filepath'
-            Storage::disk('public')->delete($audio->filepath);
-        }
+        $audio->deleteFile();
         $audio->delete();
 
         return back()->with('success', 'Audio eliminado correctamente.');
@@ -303,18 +302,16 @@ public function store(Request $request)
     // Actualizar fichero de audio si se sube uno nuevo
     if ($request->hasFile('audio')) {
         // Eliminar archivo anterior si existía
-        if ($audio->filepath) {
-            Storage::disk('public')->delete($audio->filepath);
-        }
+        $audio->deleteFile();
         $file = $request->file('audio');
-        $audio->filepath = $file->store('audios', 'public');
+        $audio->filepath = $file->store('audios', 'local');
         $audio->filetype = $file->getClientMimeType();
         // Quitar youtube_url si se sube un audio nuevo
         $audio->youtube_url = null;
     } elseif ($request->filled('youtube_url')) {
         // Actualizar URL de YouTube y borrar archivo si existía
         if ($audio->filepath) {
-            Storage::disk('public')->delete($audio->filepath);
+            $audio->deleteFile();
             $audio->filepath = null;
             $audio->filetype = null;
         }
@@ -368,6 +365,10 @@ public function store(Request $request)
     {
         $user = Auth::user();
 
+        if (!$audio->isVisibleTo($user)) {
+            abort(404);
+        }
+
         if ($audio->likes()->where('user_id', $user->id)->exists()) {
             $audio->likes()->detach($user->id);
             $liked = false;
@@ -384,13 +385,35 @@ public function store(Request $request)
         ]);
     }
 
+// Sirve el archivo al reproductor; response()->file() admite peticiones Range para poder avanzar
+public function stream(Audio $audio)
+{
+    if (!$audio->isVisibleTo(Auth::user())) {
+        abort(404);
+    }
+
+    $disk = $audio->fileDisk();
+    if (!$disk) {
+        abort(404, 'Archivo no encontrado.');
+    }
+
+    return response()->file(Storage::disk($disk)->path($audio->filepath), [
+        'Content-Type' => $audio->filetype,
+    ]);
+}
+
 public function download(Audio $audio)
 {
+    if (!$audio->isVisibleTo(Auth::user())) {
+        abort(404);
+    }
+
     if (!$audio->filepath) {
         abort(404, 'Este audio no tiene archivo para descargar.');
     }
 
-    if (!Storage::disk('public')->exists($audio->filepath)) {
+    $disk = $audio->fileDisk();
+    if (!$disk) {
         abort(404, 'Archivo no encontrado.');
     }
 
@@ -404,7 +427,7 @@ public function download(Audio $audio)
     // Sanear título para nombre de archivo
     $safeTitle = preg_replace('/[^A-Za-z0-9_\-]/', '_', $audio->title);
 
-    return Storage::disk('public')->download(
+    return Storage::disk($disk)->download(
         $audio->filepath,
         $safeTitle . '.' . $extension
     );
