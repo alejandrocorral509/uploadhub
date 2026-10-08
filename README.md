@@ -1,61 +1,129 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# UploadHub: plataforma de podcasts
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplicación web para subir, organizar y escuchar podcasts. Cada usuario sube sus episodios (archivo de audio o enlace de YouTube), los clasifica con categorías y etiquetas y decide si son públicos o privados. El resto de la comunidad puede explorarlos, escucharlos, darles "me gusta" y comentarlos.
 
-## About Laravel
+Es mi proyecto de fin de curso (TFG), desarrollado entre mayo y junio de 2025 con Laravel.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+![Explorar podcasts](docs/screenshots/explorar.jpg)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Funcionalidades
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Cuentas de usuario:** registro, inicio de sesión, recuperación de contraseña y página de ajustes del perfil.
+- **Subida de episodios:** archivos MP3, WAV, M4A, OGG o MP4 (hasta 50 MB) o un enlace de YouTube, con portada, descripción, categoría y etiquetas.
+- **Privacidad por episodio:** los episodios privados solo los ve, reproduce y descarga quien los subió.
+- **Explorar:** listado público con buscador, filtro por categoría, reproductor propio (play, barra de progreso y volumen), botón de compartir y descarga en MP3.
+- **Interacción:** "me gusta" sin recargar la página (petición AJAX) y comentarios en cada episodio.
+- **Tu biblioteca:** panel con tus estadísticas, tus episodios y tus favoritos. Las tablas se pueden ordenar por título, fecha, autor, categoría o etiqueta, y tienen buscador y paginación independientes.
+- **Edición y borrado:** solo el autor puede editar o eliminar sus episodios. Al borrar un episodio también se elimina su archivo.
 
-## Learning Laravel
+| Tu biblioteca | Subir un episodio |
+|---|---|
+| ![Biblioteca](docs/screenshots/biblioteca.jpg) | ![Subir](docs/screenshots/subir.jpg) |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## Tecnologías
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+| Capa | Herramientas |
+|---|---|
+| Backend | PHP 8.2, Laravel 12, Eloquent ORM |
+| Frontend | Blade, Tailwind CSS, Alpine.js, SweetAlert2, Vite |
+| Autenticación | Laravel Breeze |
+| Idioma | Español por defecto (`lang/es`, generado con Laravel Lang) |
+| Base de datos | MySQL (en los tests, SQLite en memoria) |
+| Tests | Pest |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Modelo de datos
 
-## Laravel Sponsors
+```
+roles ─┐
+       └─< users ─┬─< audios >─┬─< audio_category >── categories
+                  │            ├─< audio_tag >─────── tags
+                  │            └─< comments
+                  └─< audio_user_likes >── audios
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- Un usuario tiene muchos episodios (`audios`) y muchos comentarios.
+- Categorías y etiquetas se relacionan con los episodios mediante tablas intermedias (N:M).
+- Los "me gusta" son una relación N:M entre usuarios y episodios (`audio_user_likes`).
 
-### Premium Partners
+## Cómo se protegen los audios privados
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+Los archivos de audio **no** se guardan en la carpeta pública. Van al disco privado de Laravel (`storage/app/private`) y se sirven por la ruta `GET /audios/{audio}/stream`, que antes comprueba si el usuario puede verlo (`Audio::isVisibleTo()`):
 
-## Contributing
+- **Episodio público:** cualquiera puede escucharlo, también sin cuenta.
+- **Episodio privado:** solo su autor. Para cualquier otra persona la ruta responde 404, así no se revela que el episodio existe.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+La misma comprobación protege la descarga, los "me gusta" y los comentarios. La ruta de reproducción usa `response()->file()`, que admite peticiones `Range`; gracias a eso se puede saltar a cualquier punto del audio. Las portadas sí van al disco público.
 
-## Code of Conduct
+## Instalación
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Requisitos: PHP 8.2 o superior, Composer, Node.js y MySQL.
 
-## Security Vulnerabilities
+```bash
+git clone https://github.com/alejandrocorral509/ProyectoTGFPodcasts.git
+cd ProyectoTGFPodcasts
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+composer install
+npm install && npm run build
 
-## License
+cp .env.example .env
+php artisan key:generate
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Crea una base de datos llamada `proyectotgfpodcasts` y pon tus credenciales en las variables `DB_*` del `.env`. Después:
+
+```bash
+php artisan migrate --seed   # tablas + roles, categorías y un usuario administrador
+php artisan storage:link     # enlace público para las portadas
+php artisan serve
+```
+
+La aplicación queda en <http://localhost:8000>. Las credenciales del administrador de ejemplo están en `database/seeders/DatabaseSeeder.php`; cámbialas antes de usar la aplicación fuera de tu equipo.
+
+> La aplicación admite audios de hasta 50 MB. Para que PHP los deje pasar, revisa tu `php.ini` y pon `upload_max_filesize` y `post_max_size` en `64M` o más (en XAMPP vienen a 40M).
+
+> Para probarla sin MySQL, pon `DB_CONNECTION=sqlite` en el `.env`, borra la línea `DB_DATABASE` y crea un archivo vacío en `database/database.sqlite`.
+
+## Tests
+
+```bash
+php artisan test
+```
+
+La suite tiene 34 tests:
+
+- **Autenticación y perfil:** registro, login, logout, recuperación y cambio de contraseña, verificación de correo, edición y borrado de la cuenta.
+- **Episodios** (`tests/Feature/AudioTest.php`):
+  - los archivos se guardan en el disco privado;
+  - los episodios privados no se pueden reproducir, descargar, comentar ni marcar con "me gusta" desde otra cuenta;
+  - nadie puede borrar episodios de otro usuario;
+  - un visitante sin cuenta ve los episodios públicos y no los privados;
+  - el seeder crea las categorías necesarias para subir episodios.
+
+## Estructura principal
+
+```
+app/
+  Http/Controllers/
+    AudioController.php      # subir, editar, borrar, listar, reproducir, descargar, me gusta
+    CommentController.php
+    ProfileController.php
+    Auth/                    # login, registro y contraseñas (Breeze, adaptado)
+  Models/                    # Audio, User, Category, Tag, Comment, Role
+database/
+  migrations/
+  seeders/                   # roles, categorías y administrador
+resources/views/
+  audios/                    # explorar, subir, editar
+  dashboard.blade.php        # "Tu biblioteca"
+routes/web.php
+tests/Feature/
+```
+
+## Pendiente
+
+- Permitir descargar en otros formatos además de MP3.
+- Usar el rol de administrador para moderar comentarios y episodios.
+
+## Autor
+
+**Alejandro Corral Carrasco**: [GitHub](https://github.com/alejandrocorral509)
