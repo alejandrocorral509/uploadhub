@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Models\Category;
 use App\Models\Tag;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 
 
@@ -195,7 +196,7 @@ public function store(Request $request)
         $file = $request->file('audio');
         // Disco privado: el archivo solo se sirve a través de la ruta audios.stream
         $filepath = $file->store('audios', 'local');
-        $filetype = $file->getClientMimeType();
+        $filetype = $file->getMimeType();
     }
 
     $youtubeUrl = $request->input('youtube_url', null);
@@ -305,7 +306,7 @@ public function store(Request $request)
         $audio->deleteFile();
         $file = $request->file('audio');
         $audio->filepath = $file->store('audios', 'local');
-        $audio->filetype = $file->getClientMimeType();
+        $audio->filetype = $file->getMimeType();
         // Quitar youtube_url si se sube un audio nuevo
         $audio->youtube_url = null;
     } elseif ($request->filled('youtube_url')) {
@@ -397,8 +398,17 @@ public function stream(Audio $audio)
         abort(404, 'Archivo no encontrado.');
     }
 
-    return response()->file(Storage::disk($disk)->path($audio->filepath), [
-        'Content-Type' => $audio->filetype,
+    // El tipo se deduce del propio archivo, nunca de lo que dijo el navegador al subirlo,
+    // y nosniff impide que el navegador lo interprete como HTML
+    $path = Storage::disk($disk)->path($audio->filepath);
+    $mime = Storage::disk($disk)->mimeType($audio->filepath);
+    if (!Str::startsWith($mime, ['audio/', 'video/'])) {
+        $mime = 'application/octet-stream';
+    }
+
+    return response()->file($path, [
+        'Content-Type' => $mime,
+        'X-Content-Type-Options' => 'nosniff',
     ]);
 }
 

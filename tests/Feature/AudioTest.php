@@ -111,3 +111,13 @@ test('guests can browse public audio but not private audio', function () {
         ->assertDontSee('Borrador secreto')
         ->assertSee(route('login'));
 });
+
+test('the stream never trusts the stored file type', function () {
+    $audio = audioOf(User::factory()->create(), 'public');
+    $audio->update(['filetype' => 'text/html']);
+
+    $response = $this->get(route('audios.stream', $audio));
+
+    $response->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
+    expect($response->headers->get('Content-Type'))->not->toContain('html');
+});
