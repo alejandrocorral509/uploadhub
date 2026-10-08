@@ -1,30 +1,32 @@
 <?php
 
-// database/seeders/DatabaseSeeder.php
-
 namespace Database\Seeders;
 
+use App\Models\Role;
+use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        $this->call(RolesSeeder::class);
-        $this->call(CategoriesSeeder::class);
+        $this->call([RolesSeeder::class, CategoriesSeeder::class]);
 
-        // Crear un admin
-        DB::table('users')->insert([
-            'name' => 'admin',
-            'email' => 'admin@gmail.com',
-            'password' => Hash::make('admin1234'), // Cambia la contraseña según desees
-            'role_id' => 1, // El id del role 'admin'
-            'email_verified_at' => now(),
-        ]);
+        // El administrador se crea solo si se configuran sus datos en el .env:
+        // así no hay credenciales conocidas en el código
+        $email = env('ADMIN_EMAIL');
+        $password = env('ADMIN_PASSWORD');
 
-        // Aquí puedes agregar más usuarios si lo deseas
+        if ($email && $password) {
+            User::updateOrCreate(['email' => $email], [
+                'name' => env('ADMIN_NAME') ?: 'Administración',
+                'password' => $password,
+                'role_id' => Role::where('name', Role::ADMIN)->value('id'),
+            ])->forceFill(['email_verified_at' => now()])->save();
+
+            $this->command?->info("Administrador listo: {$email}");
+        } else {
+            $this->command?->warn('Sin ADMIN_EMAIL/ADMIN_PASSWORD en el .env: no se crea administrador. Usa "php artisan user:make-admin correo".');
+        }
     }
 }
-

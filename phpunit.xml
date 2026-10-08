@@ -29,5 +29,11 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="MEDIA_PROCESSING" value="false"/>
+        <env name="AI_TRANSCRIPTION_DRIVER" value="none"/>
+        <env name="AI_SUMMARY_DRIVER" value="none"/>
+        <env name="APP_LOCALE" value="es"/>
+        <env name="ADMIN_EMAIL" value=""/>
+        <env name="ADMIN_PASSWORD" value=""/>
     </php>
 </phpunit>

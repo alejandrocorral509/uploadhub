@@ -4,7 +4,7 @@ Aplicación web para subir, organizar y escuchar podcasts. Cada usuario sube sus
 
 Es mi proyecto de fin de curso (TFG), desarrollado entre mayo y junio de 2025 con Laravel.
 
-![Explorar podcasts](docs/screenshots/explorar.jpg)
+![Portada](docs/screenshots/portada.jpg)
 
 ## Funcionalidades
 
@@ -16,9 +16,9 @@ Es mi proyecto de fin de curso (TFG), desarrollado entre mayo y junio de 2025 co
 - **Tu biblioteca:** panel con tus estadísticas, tus episodios y tus favoritos. Las tablas se pueden ordenar por título, fecha, autor, categoría o etiqueta, y tienen buscador y paginación independientes.
 - **Edición y borrado:** solo el autor puede editar o eliminar sus episodios. Al borrar un episodio también se elimina su archivo.
 
-| Tu biblioteca | Subir un episodio |
+| Página de episodio | Estadísticas (curva de retención) |
 |---|---|
-| ![Biblioteca](docs/screenshots/biblioteca.jpg) | ![Subir](docs/screenshots/subir.jpg) |
+| ![Episodio](docs/screenshots/episodio.jpg) | ![Estadísticas](docs/screenshots/estadisticas.jpg) |
 
 ## Tecnologías
 

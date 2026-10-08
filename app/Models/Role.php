@@ -3,13 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Role extends Model
 {
-     // Permitir la asignación masiva para el campo 'name'
+    public const ADMIN = 'admin';
+
+    public const USER = 'user';
+
     protected $fillable = ['name'];
-    // Relación con el modelo User (un rol tiene muchos usuarios)
-    public function users()
+
+    public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }

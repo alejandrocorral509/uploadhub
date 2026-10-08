@@ -1,50 +1,31 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="csrf-token" content="{{ csrf_token() }}" />
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#4f46e5">
+    <title>{{ $title ? $title.' · ' : '' }}{{ config('app.name') }}</title>
+    <link rel="icon" href="{{ asset('images/favICON.png') }}" type="image/png">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+</head>
+<body data-user="{{ auth()->id() }}" class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-50 via-white to-fuchsia-50 px-4 py-10">
+    @if (session('success'))
+        <div x-data="flash(@js(session('success')))"></div>
+    @endif
 
-        <title>{{ config('app.name', 'UploadHub') }}</title>
-        
-        <!-- Favicon personalizado -->
-<link rel="icon" href="{{ asset('images/favICON.png') }}" type="image/png" />
+    <a href="{{ route('home') }}" class="mb-6 flex items-center gap-2">
+        <img src="{{ asset('images/favICON.png') }}" alt="" class="h-11 w-auto">
+        <span class="text-2xl font-extrabold tracking-tight text-brand-700">UploadHub</span>
+    </a>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net" />
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-pb3D5S9T3tb+CYVh+6u4p5FFzZXPBoC9ip4HSIGMH+POqHMEqBx+lsC4Rdxv+Jzo0e+Md2z1bS1a30Zj+Y4Fiw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <main class="card w-full max-w-md p-6 sm:p-8">
+        {{ $slot }}
+    </main>
 
+    <a href="{{ route('home') }}" class="mt-6 text-sm text-gray-500 hover:text-brand-700"><i class="fa-solid fa-arrow-left"></i> Volver a la portada</a>
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased bg-gray-100 flex flex-col sm:justify-center items-center min-h-screen">
-        <div class="w-full max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden rounded-lg">
-            {{ $slot }}
-        </div>
-        </div>
-        
-        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-            @if(session('success'))
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '{{ session('success') }}',
-                        toast: true,
-                        position: 'top-start',
-                        timer: 3000,
-                        timerProgressBar: true,
-                        showConfirmButton: false
-                    });
-                });
-            </script>
-            @endif
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-    </body>
+    {{-- El reproductor sigue disponible si se llega aquí con algo sonando --}}
+    @include('layouts.player')
+</body>
 </html>

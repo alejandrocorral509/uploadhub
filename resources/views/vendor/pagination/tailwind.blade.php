@@ -8,7 +8,7 @@
                 </li>
             @else
                 <li>
-                    <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="px-3 py-2 ml-0 leading-tight text-indigo-600 bg-white border border-gray-300 rounded-l-lg hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="@lang('pagination.previous')">&lsaquo;</a>
+                    <a href="{{ $paginator->previousPageUrl() }}" rel="prev" class="px-3 py-2 ml-0 leading-tight text-indigo-600 bg-white border border-gray-300 rounded-l-lg hover:bg-indigo-50 hover:text-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500" aria-label="@lang('pagination.previous')">&lsaquo;</a>
                 </li>
             @endif
 
@@ -25,7 +25,7 @@
                         @if ($page == $paginator->currentPage())
                             <li aria-current="page"><span class="px-3 py-2 leading-tight text-white bg-indigo-600 border border-indigo-600 cursor-default">{{ $page }}</span></li>
                         @else
-                            <li><a href="{{ $url }}" class="px-3 py-2 leading-tight text-indigo-600 bg-white border border-gray-300 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">{{ $page }}</a></li>
+                            <li><a href="{{ $url }}" class="px-3 py-2 leading-tight text-indigo-600 bg-white border border-gray-300 hover:bg-indigo-50 hover:text-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">{{ $page }}</a></li>
                         @endif
                     @endforeach
                 @endif
@@ -34,7 +34,7 @@
             {{-- Next Page Link --}}
             @if ($paginator->hasMorePages())
                 <li>
-                    <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="px-3 py-2 leading-tight text-indigo-600 bg-white border border-gray-300 rounded-r-lg hover:bg-indigo-50 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="@lang('pagination.next')">&rsaquo;</a>
+                    <a href="{{ $paginator->nextPageUrl() }}" rel="next" class="px-3 py-2 leading-tight text-indigo-600 bg-white border border-gray-300 rounded-r-lg hover:bg-indigo-50 hover:text-indigo-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500" aria-label="@lang('pagination.next')">&rsaquo;</a>
                 </li>
             @else
                 <li aria-disabled="true" aria-label="@lang('pagination.next')">

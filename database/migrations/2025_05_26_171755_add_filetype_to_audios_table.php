@@ -9,20 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up()
-{
-    Schema::table('audios', function (Blueprint $table) {
-        if (!Schema::hasColumn('audios', 'filetype')) {
-            $table->string('filetype')->nullable()->after('filepath');
-        }
-    });
-}
+    public function up()
+    {
+        Schema::table('audios', function (Blueprint $table) {
+            if (! Schema::hasColumn('audios', 'filetype')) {
+                $table->string('filetype')->nullable()->after('filepath');
+            }
+        });
+    }
 
-public function down()
-{
-    Schema::table('audios', function (Blueprint $table) {
-        $table->dropColumn('filetype');
-    });
-}
-
+    public function down()
+    {
+        Schema::table('audios', function (Blueprint $table) {
+            $table->dropColumn('filetype');
+        });
+    }
 };

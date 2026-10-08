@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Tag extends Model
 {
     protected $fillable = ['name'];
 
-    public function audios()
+    public function audios(): BelongsToMany
     {
-        return $this->belongsToMany(Audio::class);
+        return $this->belongsToMany(Audio::class)->withTimestamps();
     }
 }

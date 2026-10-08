@@ -10,10 +10,10 @@ return new class extends Migration
     {
         Schema::table('audios', function (Blueprint $table) {
             // Solo si no existen ya las columnas, si no están crea
-            if (!Schema::hasColumn('audios', 'filetype')) {
+            if (! Schema::hasColumn('audios', 'filetype')) {
                 $table->string('filetype')->nullable()->after('archivo');
             }
-            if (!Schema::hasColumn('audios', 'privacy')) {
+            if (! Schema::hasColumn('audios', 'privacy')) {
                 $table->enum('privacy', ['public', 'private'])->default('public')->after('filetype');
             }
         });

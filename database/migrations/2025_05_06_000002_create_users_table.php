@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up()
     {
         Schema::create('users', function (Blueprint $table) {
@@ -19,9 +20,8 @@ return new class extends Migration {
             $table->foreign('role_id')->references('id')->on('roles')->onDelete('cascade');  // Esta es la clave foránea
         });
     }
-    
 
-  public function down(): void
+    public function down(): void
     {
         Schema::dropIfExists('users');
     }

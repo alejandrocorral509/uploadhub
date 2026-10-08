@@ -3,24 +3,29 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Comment extends Model
 {
     protected $fillable = [
         'user_id',
-        'audio_id', // si usas
+        'audio_id',
         'content',
     ];
 
-    // Relación con audio (opcional)
-    public function audio()
+    public function audio(): BelongsTo
     {
         return $this->belongsTo(Audio::class);
     }
 
-    // Relación con usuario (opcional)
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reports(): MorphMany
+    {
+        return $this->morphMany(Report::class, 'reportable');
     }
 }

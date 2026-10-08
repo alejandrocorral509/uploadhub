@@ -1,189 +1,130 @@
-<nav x-data="{ open: false, dark: localStorage.getItem('dark') === 'true' }"
-     class="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50 dark:bg-gray-900 dark:border-gray-700 transition-colors duration-300">
+@php
+    $links = [
+        ['route' => 'home', 'label' => 'Inicio', 'icon' => 'fa-house', 'active' => 'home'],
+        ['route' => 'explore', 'label' => 'Explorar', 'icon' => 'fa-compass', 'active' => 'explore'],
+        ['route' => 'shows.index', 'label' => 'Programas', 'icon' => 'fa-microphone-lines', 'active' => 'shows.*'],
+    ];
+    if (auth()->check()) {
+        $links[] = ['route' => 'library', 'label' => 'Biblioteca', 'icon' => 'fa-book-open', 'active' => 'library'];
+    }
+@endphp
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex h-16 items-center justify-between">
+<nav x-data="{ open: false }" class="sticky top-0 z-40 border-b border-gray-200 bg-white/90 backdrop-blur">
+    <div class="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <a href="{{ route('home') }}" class="flex shrink-0 items-center gap-2">
+            <img src="{{ asset('images/favICON.png') }}" alt="" class="h-9 w-auto">
+            <span class="text-lg font-extrabold tracking-tight text-brand-700">UploadHub</span>
+        </a>
 
-            {{-- Logo y nombre a la izquierda --}}
-            <div class="flex items-center space-x-4 flex-shrink-0">
-                <a href="{{ route('audios.public') }}" class="flex items-center space-x-2">
-                    <img src="{{ asset('images/favICON.png') }}" alt="Mi Logo" class="h-10 w-auto">
-                    <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400 select-none">UploadHub</span>
+        <div class="hidden items-center gap-1 lg:flex">
+            @foreach ($links as $link)
+                <a href="{{ route($link['route']) }}"
+                   @class([
+                       'flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition',
+                       'bg-brand-50 text-brand-700' => request()->routeIs($link['active']),
+                       'text-gray-600 hover:bg-gray-100 hover:text-gray-900' => ! request()->routeIs($link['active']),
+                   ])>
+                    <i class="fa-solid {{ $link['icon'] }}"></i> {{ $link['label'] }}
                 </a>
+            @endforeach
+        </div>
+
+        <form action="{{ route('explore') }}" method="GET" class="ml-auto hidden max-w-xs flex-1 md:block" role="search">
+            <label for="nav-search" class="sr-only">Buscar episodios</label>
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm text-gray-400"></i>
+                <input id="nav-search" type="search" name="q" value="{{ request()->routeIs('explore') ? request('q') : '' }}"
+                       placeholder="Buscar episodios, programas, temas…" class="input rounded-full pl-9">
             </div>
+        </form>
 
-            {{-- Navegación centrada --}}
-            <div class="hidden sm:flex items-center gap-8">
-                <x-nav-link :href="route('audios.public')" :active="request()->routeIs('audios.public')"
-                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400
-                                transition duration-150 flex items-center gap-2">
-                    <i class="fa-solid fa-house text-lg"></i>
-                    <span>Inicio</span>
-                </x-nav-link>
+        <div class="ml-auto flex items-center gap-2 md:ml-0">
+            @auth
+                <a href="{{ route('episodes.create') }}" class="btn btn-primary hidden sm:inline-flex">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir
+                </a>
 
-                <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')"
-                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400
-                                transition duration-150 flex items-center gap-2">
-                    <i class="fa-solid fa-book text-lg"></i>
-                    <span>Tu biblioteca</span>
-                </x-nav-link>
-
-                <x-nav-link :href="route('audios.upload')"
-                            class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400
-                                transition duration-150 flex items-center gap-2">
-                    <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
-                    <span>Subir archivos</span>
-                </x-nav-link>
-            </div>
-            {{-- Dark mode toggle + usuario + botón subir audio --}}
-            <div class="hidden sm:flex sm:items-center sm:space-x-4 flex-shrink-0">
-                {{-- Dark mode --}
-
-                {{-- Dropdown usuario (la página pública también se ve sin sesión) --}}
-                @auth
-                <x-dropdown align="right" width="72">
-                    <x-slot name="trigger">
-                        <button
-                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md
-                                   text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
-                                   focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150">
-                            <span>{{ Auth::user()->name }}</span>
-                            <svg class="ml-2 h-5 w-5 text-gray-400 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                    </x-slot>
-
-                    <x-slot name="content">
-                        <x-dropdown-link :href="route('profile.edit')">
-                            Ajustes
-                        </x-dropdown-link>
-
-                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                <div x-data="{ menu: false }" class="relative hidden sm:block" @keydown.escape.window="menu = false">
+                    <button type="button" @click="menu = ! menu" class="flex items-center gap-2 rounded-full p-1 pr-2 transition hover:bg-gray-100"
+                            :aria-expanded="menu" aria-haspopup="true">
+                        <x-avatar :user="auth()->user()" size="size-8" />
+                        <i class="fa-solid fa-chevron-down text-xs text-gray-400"></i>
+                        <span class="sr-only">Menú de usuario</span>
+                    </button>
+                    <div x-show="menu" x-cloak x-transition.origin.top.right @click.outside="menu = false"
+                         class="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg">
+                        <div class="border-b border-gray-100 px-4 py-3">
+                            <p class="truncate text-sm font-semibold">{{ auth()->user()->name }}</p>
+                            <p class="truncate text-xs text-gray-500">{{ auth()->user()->email }}</p>
+                        </div>
+                        <a href="{{ auth()->user()->profileUrl() }}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-user w-4 text-gray-400"></i> Mi perfil público</a>
+                        <a href="{{ route('library') }}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-book-open w-4 text-gray-400"></i> Biblioteca</a>
+                        <a href="{{ route('stats.index') }}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-chart-column w-4 text-gray-400"></i> Estadísticas</a>
+                        <a href="{{ route('shows.create') }}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-plus w-4 text-gray-400"></i> Crear programa</a>
+                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-gear w-4 text-gray-400"></i> Ajustes</a>
+                        @if (auth()->user()->isAdmin())
+                            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-50"><i class="fa-solid fa-shield-halved w-4 text-gray-400"></i> Administración</a>
+                        @endif
+                        <form method="POST" action="{{ route('logout') }}" class="border-t border-gray-100"
+                              x-data="confirmForm({ title: '¿Cerrar sesión?', confirm: 'Sí, cerrar sesión' })" @submit="submit">
                             @csrf
-                            <x-dropdown-link href="#" onclick="confirmLogout(event)">
-                                Cerrar sesión
-                            </x-dropdown-link>
+                            <button type="submit" class="flex w-full items-center gap-3 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50">
+                                <i class="fa-solid fa-arrow-right-from-bracket w-4"></i> Cerrar sesión
+                            </button>
                         </form>
+                    </div>
+                </div>
+            @else
+                <a href="{{ route('login') }}" class="btn btn-ghost hidden sm:inline-flex">Iniciar sesión</a>
+                <a href="{{ route('register') }}" class="btn btn-primary hidden sm:inline-flex">Crear cuenta</a>
+            @endauth
 
-                    </x-slot>
-                </x-dropdown>
-                @else
-                <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition">Iniciar sesión</a>
-                <a href="{{ route('register') }}" class="px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition">Registrarse</a>
-                @endauth
-            </div>
-
-            {{-- Hamburger (menú móvil) --}}
-            <div class="sm:hidden flex items-center">
-                <button
-                    @click="open = ! open"
-                    class="inline-flex items-center justify-center p-2 rounded-md text-gray-500 dark:text-gray-300 hover:text-indigo-600 hover:bg-gray-100 dark:hover:bg-gray-800
-                           focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500 transition duration-150"
-                    aria-label="Toggle navigation">
-                    <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                        <path :class="{'hidden': open, 'inline-flex': !open }" class="inline-flex"
-                              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M4 6h16M4 12h16M4 18h16" />
-                        <path :class="{'hidden': !open, 'inline-flex': open }" class="hidden"
-                              stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
+            <button type="button" @click="open = ! open" class="btn-icon text-gray-600 hover:bg-gray-100 lg:hidden" :aria-expanded="open" aria-label="Abrir menú">
+                <i class="fa-solid" :class="open ? 'fa-xmark' : 'fa-bars'"></i>
+            </button>
         </div>
     </div>
 
-    {{-- Menú responsive móvil --}}
-    <div :class="open ? 'block' : 'hidden'" class="sm:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-inner transition-colors duration-300">
-        <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('audios.public')" :active="request()->routeIs('audios.public')" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
-                Explorar
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
-                Mis Archivos
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
-                Favoritos
-            </x-responsive-nav-link>
-
-            <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
-                Ajustes
-            </x-responsive-nav-link>
+    {{-- Menú móvil --}}
+    <div x-show="open" x-cloak x-transition class="border-t border-gray-200 bg-white lg:hidden">
+        <div class="space-y-1 px-4 py-3">
+            <form action="{{ route('explore') }}" method="GET" class="mb-3 md:hidden" role="search">
+                <input type="search" name="q" placeholder="Buscar episodios…" class="input rounded-full" aria-label="Buscar episodios">
+            </form>
+            @foreach ($links as $link)
+                <a href="{{ route($link['route']) }}" @class([
+                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium',
+                    'bg-brand-50 text-brand-700' => request()->routeIs($link['active']),
+                    'text-gray-700 hover:bg-gray-100' => ! request()->routeIs($link['active']),
+                ])><i class="fa-solid {{ $link['icon'] }} w-5"></i> {{ $link['label'] }}</a>
+            @endforeach
         </div>
-
-        @guest
-        <div class="pt-4 pb-3 border-t border-gray-200 space-y-1">
-            <x-responsive-nav-link :href="route('login')" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
-                Iniciar sesión
-            </x-responsive-nav-link>
-            <x-responsive-nav-link :href="route('register')" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
-                Registrarse
-            </x-responsive-nav-link>
-        </div>
-        @endguest
-
-        @auth
-        <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700">
-            <div class="px-4">
-                <div class="font-semibold text-gray-900 dark:text-gray-200">{{ Auth::user()->name }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">{{ Auth::user()->email }}</div>
-            </div>
-
-            <div class="mt-3 space-y-1">
-
+        <div class="border-t border-gray-200 px-4 py-3">
+            @auth
+                <div class="mb-2 flex items-center gap-3 px-3">
+                    <x-avatar :user="auth()->user()" size="size-9" />
+                    <div class="min-w-0">
+                        <p class="truncate text-sm font-semibold">{{ auth()->user()->name }}</p>
+                        <p class="truncate text-xs text-gray-500">{{ auth()->user()->email }}</p>
+                    </div>
+                </div>
+                <a href="{{ route('episodes.create') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-brand-700 hover:bg-gray-100"><i class="fa-solid fa-cloud-arrow-up w-5"></i> Subir episodio</a>
+                <a href="{{ auth()->user()->profileUrl() }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100"><i class="fa-solid fa-user w-5 text-gray-400"></i> Mi perfil público</a>
+                <a href="{{ route('stats.index') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100"><i class="fa-solid fa-chart-column w-5 text-gray-400"></i> Estadísticas</a>
+                <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100"><i class="fa-solid fa-gear w-5 text-gray-400"></i> Ajustes</a>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-gray-100"><i class="fa-solid fa-shield-halved w-5 text-gray-400"></i> Administración</a>
+                @endif
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <x-responsive-nav-link :href="route('logout')" onclick="event.preventDefault(); this.closest('form').submit();" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
-                        Cerrar sesión
-                    </x-responsive-nav-link>
+                    <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"><i class="fa-solid fa-arrow-right-from-bracket w-5"></i> Cerrar sesión</button>
                 </form>
-            </div>
+            @else
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="{{ route('login') }}" class="btn btn-secondary">Iniciar sesión</a>
+                    <a href="{{ route('register') }}" class="btn btn-primary">Crear cuenta</a>
+                </div>
+            @endauth
         </div>
-        @endauth
     </div>
-
-    <script>
-function confirmLogout(event) {
-    event.preventDefault(); // Evita el submit normal
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: "¿Quieres cerrar sesión?",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#4F46E5', // Indigo 600
-        cancelButtonColor: '#6B7280',  // Gray 500
-        confirmButtonText: 'Sí, cerrar sesión',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('logout-form').submit();
-        }
-    });
-}
-
-function confirmLogoutMobile(event) {
-    event.preventDefault();
-    Swal.fire({
-        title: '¿Estás seguro?',
-        text: "¿Quieres cerrar sesión?",
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#4F46E5',
-        cancelButtonColor: '#6B7280',
-        confirmButtonText: 'Sí, cerrar sesión',
-        cancelButtonText: 'Cancelar'
-    }).then((result) => {
-        if (result.isConfirmed) {
-            document.getElementById('logout-form-mobile').submit();
-        }
-    });
-}
-</script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-
-
 </nav>

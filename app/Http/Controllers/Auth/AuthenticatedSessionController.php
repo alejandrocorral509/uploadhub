@@ -2,48 +2,38 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function create()
+    public function create(): View
     {
-        return view('auth.login'); // Vista de login
+        return view('auth.login');
     }
 
-    public function store(Request $request)
+    // LoginRequest limita los intentos (5 por correo e IP) y rechaza las cuentas bloqueadas
+    public function store(LoginRequest $request): RedirectResponse
     {
-        // Validación de los datos de login
-        $validated = $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+        $request->authenticate();
 
-        // Intentar autenticar al usuario
-            if (Auth::attempt($validated)) {
-                // Nuevo ID de sesión al entrar para evitar fijación de sesión
-                $request->session()->regenerate();
-                session()->flash('success', '¡Has iniciado sesión correctamente!');
-                return redirect()->intended(route('audios.public'));
-            }
+        // Nuevo ID de sesión al entrar para evitar fijación de sesión
+        $request->session()->regenerate();
 
-
-
-        // Si la autenticación falla, volver a mostrar el formulario con un error
-        return back()->withErrors([
-            'email' => __('auth.failed'),
-        ]);
-
-        
+        return redirect()->intended(route('home'))->with('success', '¡Hola de nuevo, '.$request->user()->name.'!');
     }
 
-    public function destroy(Request $request)
+    public function destroy(Request $request): RedirectResponse
     {
-        Auth::logout(); // Cerrar sesión
+        Auth::guard('web')->logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+
+        return redirect()->route('login');
     }
 }

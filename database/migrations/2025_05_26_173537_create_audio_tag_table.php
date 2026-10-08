@@ -23,5 +23,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('audio_tag');
     }
-
 };

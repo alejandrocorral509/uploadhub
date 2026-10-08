@@ -1,4 +1,5 @@
 <?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,4 +22,3 @@ class CreateAudioUserLikesTable extends Migration
         Schema::dropIfExists('audio_user_likes');
     }
 }
-

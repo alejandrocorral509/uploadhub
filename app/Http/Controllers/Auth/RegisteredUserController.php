@@ -1,47 +1,35 @@
 <?php
+
 namespace App\Http\Controllers\Auth;
 
-use App\Models\User;
-use App\Models\Role;  // Asegúrate de tener importado el modelo Role
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
-
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
-    public function create()
+    public function create(): View
     {
-        return view('auth.register'); // Redirige a la vista del registro
+        return view('auth.register');
     }
 
-public function store(Request $request)
-{
-    // Validación de los datos
-    $validated = $request->validate([
-        'name' => ['required', 'string', 'max:255'],
-        'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-        'password' => ['required', 'string', 'min:8', 'confirmed'],
-    ]);
+    // Tras registrarse se vuelve al login con un aviso (el rol "user" lo asigna el modelo)
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ], attributes: ['name' => 'nombre', 'password' => 'contraseña']);
 
-    // Creamos el usuario con un rol por defecto (en este caso 'default')
-    $role = Role::firstOrCreate(['name' => 'default']); // Si no existe el rol 'default', lo creamos
-    $user = User::create([
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'password' => Hash::make($validated['password']),
-        'role_id' => $role->id,  // Asignamos el rol
-    ]);
+        $user = User::create($validated);
 
-    // Mensaje flash para mostrar al llegar al login
-    session()->flash('success', '¡Cuenta creada correctamente! Ahora puedes iniciar sesión.');
+        event(new Registered($user));
 
-    // Redirigir al login
-    return redirect()->route('login');
+        return redirect()->route('login')->with('success', '¡Cuenta creada correctamente! Ahora puedes iniciar sesión.');
+    }
 }
-
-}
-
-
