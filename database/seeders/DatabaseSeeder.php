@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         $this->call(RolesSeeder::class);
+        $this->call(CategoriesSeeder::class);
 
         // Crear un admin
         DB::table('users')->insert([
