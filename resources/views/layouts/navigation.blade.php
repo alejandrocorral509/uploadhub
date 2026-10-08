@@ -39,7 +39,8 @@
             <div class="hidden sm:flex sm:items-center sm:space-x-4 flex-shrink-0">
                 {{-- Dark mode --}
 
-                {{-- Dropdown usuario --}}
+                {{-- Dropdown usuario (la página pública también se ve sin sesión) --}}
+                @auth
                 <x-dropdown align="right" width="72">
                     <x-slot name="trigger">
                         <button
@@ -54,6 +55,10 @@
                     </x-slot>
 
                     <x-slot name="content">
+                        <x-dropdown-link :href="route('profile.edit')">
+                            Ajustes
+                        </x-dropdown-link>
+
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
                             <x-dropdown-link href="#" onclick="confirmLogout(event)">
@@ -63,6 +68,10 @@
 
                     </x-slot>
                 </x-dropdown>
+                @else
+                <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 transition">Iniciar sesión</a>
+                <a href="{{ route('register') }}" class="px-4 py-2 text-sm font-medium rounded-md bg-indigo-600 text-white hover:bg-indigo-700 transition">Registrarse</a>
+                @endauth
             </div>
 
             {{-- Hamburger (menú móvil) --}}
@@ -100,11 +109,23 @@
                 Favoritos
             </x-responsive-nav-link>
 
-            <x-responsive-nav-link href="#" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
+            <x-responsive-nav-link :href="route('profile.edit')" :active="request()->routeIs('profile.edit')" class="block px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-700 hover:text-indigo-700 dark:hover:text-indigo-200 transition">
                 Ajustes
             </x-responsive-nav-link>
         </div>
 
+        @guest
+        <div class="pt-4 pb-3 border-t border-gray-200 space-y-1">
+            <x-responsive-nav-link :href="route('login')" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                Iniciar sesión
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('register')" class="block px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 transition">
+                Registrarse
+            </x-responsive-nav-link>
+        </div>
+        @endguest
+
+        @auth
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-700">
             <div class="px-4">
                 <div class="font-semibold text-gray-900 dark:text-gray-200">{{ Auth::user()->name }}</div>
@@ -121,6 +142,7 @@
                 </form>
             </div>
         </div>
+        @endauth
     </div>
 
     <script>
