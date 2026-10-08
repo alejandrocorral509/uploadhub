@@ -34,7 +34,7 @@
                 {{-- Texto informativo --}}
                 <div class="mb-8 text-gray-700 text-sm leading-relaxed">
                     <p><strong>Sube tus archivos de audio.</strong></p>
-                    <p>Para obtener la mejor calidad, utiliza WAV, FLAC, AIFF o ALAC. El tamaño máximo del archivo es de 4 GB sin comprimir. <a href="#" class="text-indigo-600 hover:underline">Más información.</a></p>
+                    <p>Formatos admitidos: MP3, WAV, M4A, OGG o MP4, hasta 50 MB. También puedes pegar un enlace de YouTube en lugar de subir un archivo. La portada es opcional (imagen de hasta 5 MB).</p>
                 </div>
 
                 {{-- Formulario subida audio/video --}}
@@ -187,7 +187,7 @@
                                     type="file"
                                     name="audio"
                                     id="audio"
-                                    accept=".mp3,.wav,.m4a,.mp4"
+                                    accept=".mp3,.wav,.m4a,.ogg,.mp4"
                                     class="hidden"
                                     @change="updateFile($event)"
                                     x-ref="inputFile"
