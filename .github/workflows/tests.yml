@@ -44,6 +44,12 @@ jobs:
       - name: Instalar ffmpeg
         run: bash deploy/ffmpeg.sh
 
+      # El script nunca rompe un despliegue, así que aquí se comprueba que de verdad funciona
+      - name: Comprobar ffmpeg
+        run: |
+          test -x bin/ffmpeg/ffmpeg && test -x bin/ffmpeg/ffprobe
+          bin/ffmpeg/ffmpeg -hide_banner -encoders | grep -q libmp3lame
+
       - name: Dependencias PHP
         run: composer install --no-interaction --prefer-dist --no-progress
 
