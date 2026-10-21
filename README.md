@@ -88,8 +88,8 @@ users ─┬─< shows ──────< audios (episodios) >──┬─< com
 Requisitos: PHP 8.2 o superior (con `pdo_sqlite` o `pdo_mysql` y `fileinfo`), Composer y Node.js 20. ffmpeg es opcional.
 
 ```bash
-git clone https://github.com/alejandrocorral509/ProyectoTGFPodcasts.git
-cd ProyectoTGFPodcasts
+git clone https://github.com/alejandrocorral509/uploadhub.git
+cd uploadhub
 composer install
 npm install && npm run build
 cp .env.example .env

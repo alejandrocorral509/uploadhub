@@ -16,7 +16,7 @@ Guía paso a paso para publicar UploadHub como demo pública en [Laravel Cloud](
 ## 1. Cuenta y aplicación
 
 1. Crea la cuenta en <https://cloud.laravel.com> con el plan **Starter**.
-2. Conecta tu cuenta de GitHub y dale acceso al repositorio `ProyectoTGFPodcasts` (puede seguir siendo privado).
+2. Conecta tu cuenta de GitHub y dale acceso al repositorio `uploadhub`.
 3. **New application** → elige el repositorio, la rama `master` y una región de Europa (por ejemplo, Frankfurt).
 4. En **Settings → Spending limits** pon un límite de gasto, por ejemplo 10 $, para que nunca haya sorpresas.
 
