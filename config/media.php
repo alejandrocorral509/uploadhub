@@ -23,8 +23,8 @@ return [
 
     // Binarios para procesar el audio. Si no existen, el audio se publica sin procesar.
     // En Laravel Cloud, deploy/ffmpeg.sh los descarga en bin/ffmpeg/ durante el build.
-    'ffmpeg' => env('FFMPEG_BINARY', is_file(base_path('bin/ffmpeg/ffmpeg')) ? base_path('bin/ffmpeg/ffmpeg') : 'ffmpeg'),
-    'ffprobe' => env('FFPROBE_BINARY', is_file(base_path('bin/ffmpeg/ffprobe')) ? base_path('bin/ffmpeg/ffprobe') : 'ffprobe'),
+    'ffmpeg' => env('FFMPEG_BINARY') ?: (is_file(base_path('bin/ffmpeg/ffmpeg')) ? base_path('bin/ffmpeg/ffmpeg') : 'ffmpeg'),
+    'ffprobe' => env('FFPROBE_BINARY') ?: (is_file(base_path('bin/ffmpeg/ffprobe')) ? base_path('bin/ffmpeg/ffprobe') : 'ffprobe'),
 
     // Tiempo máximo del procesado. Las colas Flex de Laravel Cloud cortan a los 90 s.
     'job_timeout' => (int) env('MEDIA_JOB_TIMEOUT', 3600),

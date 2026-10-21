@@ -86,7 +86,7 @@ jobs:
 
       - name: Tests (SQLite)
         if: matrix.database == 'sqlite'
-        run: php artisan test
+        run: php artisan test --fail-on-skipped
 
       - name: Tests (MySQL)
         if: matrix.database == 'mysql'
@@ -96,4 +96,4 @@ jobs:
           DB_DATABASE: uploadhub_test
           DB_USERNAME: root
           DB_PASSWORD: secret
-        run: php artisan test
+        run: php artisan test --fail-on-skipped

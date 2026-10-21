@@ -26,7 +26,7 @@ test('con ffmpeg: lee la duración, convierte a MP3 y genera la forma de onda', 
 
     // Un WAV de 3 segundos generado con ffmpeg
     $wav = sys_get_temp_dir().'/uploadhub-test.wav';
-    Process::run(['ffmpeg', '-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', $wav])->throw();
+    Process::run([config('media.ffmpeg'), '-y', '-v', 'error', '-f', 'lavfi', '-i', 'sine=frequency=440:duration=3', $wav])->throw();
     Storage::disk('local')->put('audios/original.wav', file_get_contents($wav));
     $audio = Audio::factory()->create(['filepath' => 'audios/original.wav', 'filetype' => 'audio/x-wav', 'duration' => null]);
 
