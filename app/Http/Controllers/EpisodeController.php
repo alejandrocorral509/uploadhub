@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EpisodeRequest;
 use App\Jobs\ProcessAudio;
+use App\Jobs\TranscribeAudio;
 use App\Models\Audio;
 use App\Models\Category;
 use App\Models\PlaybackProgress;
@@ -113,6 +114,9 @@ class EpisodeController extends Controller
             if ($old->filepath && $old->filepath !== $audio->filepath) {
                 $old->deleteFile();
             }
+
+            // Lo generado con IA era del audio anterior
+            $audio->fill(['transcript' => null, 'summary' => null, 'chapters' => null, 'transcript_status' => null]);
         }
 
         if ($request->hasFile('cover') || $request->boolean('remove_cover')) {
@@ -127,6 +131,9 @@ class EpisodeController extends Controller
 
         if ($sourceChanged && $audio->filepath) {
             ProcessAudio::dispatch($audio);
+        } elseif ($audio->wasChanged('privacy')) {
+            // Un episodio privado que se publica se transcribe ahora (si la IA está activada)
+            TranscribeAudio::queueIfEligible($audio);
         }
 
         return $this->done($request, $audio, 'Episodio actualizado.');

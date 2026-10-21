@@ -23,10 +23,38 @@ class TranscribeAudio implements ShouldQueue
 
     public function __construct(public Audio $audio) {}
 
+    /**
+     * Encola la transcripción si procede. Por privacidad, solo se transcriben los episodios
+     * públicos: transcribir supone enviar el audio a servicios externos (OpenAI y Anthropic).
+     * Un episodio privado que se publica más tarde se transcribe en ese momento.
+     */
+    public static function queueIfEligible(Audio $audio): bool
+    {
+        $eligible = config('ai.transcription.driver') !== 'none'
+            && $audio->isPublic()
+            && $audio->filepath
+            && ! $audio->isVideo()
+            && $audio->transcript_status === null;
+
+        if ($eligible) {
+            $audio->update(['transcript_status' => 'pending']);
+            static::dispatch($audio);
+        }
+
+        return $eligible;
+    }
+
     public function handle(Transcriber $transcriber, Summarizer $summarizer): void
     {
         $audio = $this->audio->fresh();
         if (! $audio || ! $audio->filepath || ! $audio->fileDisk()) {
+            return;
+        }
+
+        // Si se ha hecho privado mientras esperaba en la cola, no se envía a ningún servicio
+        if (! $audio->isPublic()) {
+            $audio->update(['transcript_status' => null]);
+
             return;
         }
 

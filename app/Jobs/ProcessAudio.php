@@ -92,10 +92,7 @@ class ProcessAudio implements ShouldQueue
 
     private function queueTranscription(Audio $audio): void
     {
-        if (config('ai.transcription.driver') !== 'none' && ! $audio->isVideo()) {
-            $audio->update(['transcript_status' => 'pending']);
-            TranscribeAudio::dispatch($audio);
-        }
+        TranscribeAudio::queueIfEligible($audio);
     }
 
     private function download($disk, string $path, string $target): void

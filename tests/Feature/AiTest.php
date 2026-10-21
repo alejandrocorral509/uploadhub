@@ -6,6 +6,8 @@ use App\Jobs\TranscribeAudio;
 use App\Models\Audio;
 use App\Services\Ai\WhisperTranscriber;
 use App\Services\AudioProcessor;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
 
 test('la transcripción guarda el texto, el resumen y los capítulos', function () {
@@ -91,4 +93,54 @@ test('sin clave de API la transcripción avisa del problema', function () {
     config(['ai.transcription.openai_key' => null]);
 
     expect(fn () => app(WhisperTranscriber::class)->transcribe('x'))->toThrow(RuntimeException::class, 'OPENAI_API_KEY');
+});
+
+describe('privacidad', function () {
+    beforeEach(fn () => config(['ai.transcription.driver' => 'openai']));
+
+    test('los episodios privados no se transcriben', function () {
+        Bus::fake([TranscribeAudio::class]);
+        $audio = Audio::factory()->withFile()->private()->create();
+
+        expect(TranscribeAudio::queueIfEligible($audio))->toBeFalse();
+        Bus::assertNotDispatched(TranscribeAudio::class);
+    });
+
+    test('un episodio privado que se publica se transcribe en ese momento', function () {
+        Bus::fake([TranscribeAudio::class]);
+        $audio = Audio::factory()->withFile()->private()->create();
+        $audio->categories()->attach(categoryIds());
+
+        $this->actingAs($audio->user)->put(route('episodes.update', $audio), [
+            'title' => $audio->title, 'privacy' => 'public', 'categories' => categoryIds(),
+        ])->assertRedirect();
+
+        Bus::assertDispatched(TranscribeAudio::class);
+        expect($audio->fresh()->transcript_status)->toBe('pending');
+    });
+
+    test('si se hace privado mientras espera en la cola, no se envía', function () {
+        $transcriber = Mockery::mock(Transcriber::class);
+        $transcriber->shouldNotReceive('transcribe');
+        app()->instance(Transcriber::class, $transcriber);
+
+        $audio = Audio::factory()->withFile()->private()->create(['transcript_status' => 'pending']);
+
+        TranscribeAudio::dispatchSync($audio);
+
+        expect($audio->fresh()->transcript_status)->toBeNull();
+    });
+
+    test('al cambiar el audio se borra la transcripción del anterior', function () {
+        Bus::fake();
+        $audio = Audio::factory()->withFile()->create(['transcript' => 'viejo', 'summary' => 'viejo', 'transcript_status' => 'ready']);
+
+        $this->actingAs($audio->user)->put(route('episodes.update', $audio), [
+            'title' => $audio->title, 'privacy' => 'public', 'categories' => categoryIds(),
+            'audio' => UploadedFile::fake()->create('nuevo.mp3', 20, 'audio/mpeg'),
+        ]);
+
+        $audio->refresh();
+        expect($audio->transcript)->toBeNull()->and($audio->summary)->toBeNull()->and($audio->transcript_status)->toBeNull();
+    });
 });

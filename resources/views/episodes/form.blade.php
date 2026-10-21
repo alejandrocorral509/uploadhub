@@ -186,6 +186,11 @@
                             </label>
                         @endforeach
                     </div>
+                    @if (config('ai.transcription.driver') !== 'none')
+                        <p class="help mt-3"><i class="fa-solid fa-wand-magic-sparkles"></i>
+                            Los episodios públicos se transcriben y resumen automáticamente con servicios externos de IA (OpenAI y Anthropic).
+                            Los privados no se envían a ningún sitio.</p>
+                    @endif
                 </fieldset>
             </section>
 
