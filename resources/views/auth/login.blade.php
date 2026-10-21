@@ -4,6 +4,13 @@
 
     <x-auth-session-status class="mt-4" :status="session('status')" />
 
+    @if (\App\Support\Demo::enabled())
+        <form method="POST" action="{{ route('demo.login') }}" class="mt-4">
+            @csrf
+            <button class="btn w-full bg-amber-100 text-amber-900 hover:bg-amber-200"><i class="fa-solid fa-flask"></i> Probar la demo sin registrarte</button>
+        </form>
+    @endif
+
     <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-5">
         @csrf
 

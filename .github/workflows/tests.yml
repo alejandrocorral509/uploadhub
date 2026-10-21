@@ -9,13 +9,30 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    # SQLite (desarrollo) y MySQL 8.4 (la versión de Laravel Cloud)
+    strategy:
+      fail-fast: false
+      matrix:
+        database: [sqlite, mysql]
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: uploadhub_test
+          MYSQL_ROOT_PASSWORD: secret
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -psecret"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
     steps:
       - uses: actions/checkout@v4
 
       - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: mbstring, pdo_sqlite, fileinfo, gd
+          extensions: mbstring, pdo_sqlite, pdo_mysql, fileinfo, gd
           coverage: none
 
       - uses: actions/setup-node@v4
@@ -23,9 +40,9 @@ jobs:
           node-version: '20'
           cache: npm
 
-      # ffmpeg para que también se ejecute el test de procesado de audio real
+      # El mismo script que se usa en el build de Laravel Cloud
       - name: Instalar ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg
+        run: bash deploy/ffmpeg.sh
 
       - name: Dependencias PHP
         run: composer install --no-interaction --prefer-dist --no-progress
@@ -43,8 +60,34 @@ jobs:
           npm ci
           npm run build
 
-      - name: Tests
+      - name: Preparar la aplicación
         run: |
           cp .env.example .env
           php artisan key:generate
-          php artisan test
+
+      - name: Migraciones de ida y vuelta (MySQL)
+        if: matrix.database == 'mysql'
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: uploadhub_test
+          DB_USERNAME: root
+          DB_PASSWORD: secret
+        run: |
+          php artisan migrate --seed --force
+          php artisan db:seed --class=DemoSeeder --force
+          php artisan migrate:reset --force
+
+      - name: Tests (SQLite)
+        if: matrix.database == 'sqlite'
+        run: php artisan test
+
+      - name: Tests (MySQL)
+        if: matrix.database == 'mysql'
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_DATABASE: uploadhub_test
+          DB_USERNAME: root
+          DB_PASSWORD: secret
+        run: php artisan test

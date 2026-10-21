@@ -50,7 +50,7 @@ Una API versionada (`/api/v1`) con autenticación por token (Laravel Sanctum), p
 | Audio | ffmpeg y ffprobe (opcionales) |
 | Archivos | Disco local o S3 / Cloudflare R2 |
 | Base de datos | MySQL; SQLite en desarrollo y en los tests |
-| Calidad | Pest (131 tests), Laravel Pint y GitHub Actions |
+| Calidad | Pest (138 tests, con SQLite y MySQL), Laravel Pint y GitHub Actions |
 
 ## Cómo está hecho
 
@@ -132,7 +132,7 @@ La aplicación queda en <http://localhost:8000>.
 php artisan test
 ```
 
-131 tests con Pest:
+138 tests con Pest:
 
 | Archivo | Qué cubre |
 |---|---|
@@ -144,8 +144,9 @@ php artisan test
 | `ApiTest` | Tokens, listados, privacidad con token, me gusta, comentarios y suscripciones |
 | `ProcessingTest` | Procesado real con ffmpeg (se salta si no está instalado) y publicación sin ffmpeg |
 | `PagesTest` | Todas las páginas con los datos de demo; detecta N+1 |
+| `DemoTest` | Modo demo: entrada sin registro, cuentas protegidas, límites diarios y reinicio |
 
-En cada push, **GitHub Actions** comprueba el estilo con Pint, audita las dependencias con `composer audit` y `npm audit`, compila el frontend y pasa los tests con ffmpeg instalado.
+En cada push, **GitHub Actions** comprueba el estilo con Pint, audita las dependencias con `composer audit` y `npm audit`, compila el frontend y pasa los tests dos veces: con SQLite y con **MySQL 8.4**, la versión de producción. También ejecuta las migraciones de ida y vuelta en MySQL e instala ffmpeg con el mismo script que el despliegue.
 
 ## API
 
@@ -171,17 +172,30 @@ Las respuestas siguen el formato de los API Resources de Laravel (`data`, más `
 
 ## Despliegue
 
-La aplicación está preparada para producción, aunque todavía no hay una demo pública:
+La demo pública está pensada para **[Laravel Cloud](https://cloud.laravel.com)**: web y base de datos MySQL que se duermen sin visitas, buckets de Cloudflare R2 para los audios y las portadas, y una cola gestionada para el procesado. La guía paso a paso está en **[docs/DESPLIEGUE.md](docs/DESPLIEGUE.md)**.
 
-- **Archivos:** con `MEDIA_DISK=s3` y las variables `AWS_*`, los audios van a S3 o Cloudflare R2. Para R2, `AWS_ENDPOINT=https://<cuenta>.r2.cloudflarestorage.com` y `AWS_DEFAULT_REGION=auto`.
+Para cualquier otro servidor:
+
+- **Archivos:** con `MEDIA_DISK=s3` y las variables `AWS_*`, los audios van a S3 o Cloudflare R2.
 - **Correo:** configura `MAIL_*` con un servidor SMTP real para que funcione la recuperación de contraseña.
-- **Procesos:** un worker de la cola (`php artisan queue:work`), el programador de tareas y ffmpeg instalado en el servidor.
-- **Tamaño de subida:** las subidas van por trozos de 5 MB, así que basta con que `upload_max_filesize` y `post_max_size` de PHP admitan algo más de 5 MB.
+- **Procesos:** un worker de la cola (`php artisan queue:work`), el programador de tareas y ffmpeg (el script `deploy/ffmpeg.sh` lo descarga si no se puede instalar).
+- **Tamaño de subida:** las subidas van por trozos de 5 MB, así que basta con que PHP admita algo más de 5 MB por petición.
+
+### Modo demo
+
+Con `DEMO_MODE=true`, la aplicación se comporta como demo pública:
+
+- un botón permite **entrar con una cuenta de ejemplo** sin registrarse;
+- las cuentas de ejemplo no se pueden modificar ni borrar;
+- cada cuenta puede crear 3 episodios y 1 programa al día, con archivos de hasta 25 MB;
+- **cada noche** `demo:reset` borra todo y vuelve a cargar los datos de ejemplo.
+
+Nunca se debe activar en una instalación con datos reales.
 
 ## Hoja de ruta
 
 - **Transcripción y resúmenes con IA (en preparación).** Cada episodio público se transcribirá con Whisper y, a partir del texto, Claude generará un resumen y capítulos con marca de tiempo. La transcripción también servirá para buscar episodios por lo que se dice en ellos. El código y sus tests ya están hechos (`App\Jobs\TranscribeAudio`, `config/ai.php`), pero está desactivado (`AI_*_DRIVER=none`) hasta conectar las cuentas de las APIs. Por privacidad, solo se enviarán episodios públicos. La demo incluye un episodio con resumen y capítulos de ejemplo para ver cómo quedará.
-- **Demo pública desplegada**, con almacenamiento en Cloudflare R2.
+- **Demo pública desplegada** en Laravel Cloud.
 - **App Android** que use la API.
 
 ## Estructura
@@ -204,6 +218,15 @@ resources/js/              Reproductor, subida por trozos y componentes de Alpin
 resources/views/           Vistas Blade y componentes (tarjetas, gráficas SVG…)
 tests/                     Pest: Feature y Unit
 ```
+
+## Cómo se ha hecho
+
+El TFG original (2025) lo programé yo, con Laravel, Blade y Tailwind. La reconstrucción de 2026 la he hecho trabajando con un **agente de IA (Claude Code)**:
+
+- **Mi parte:** decidir qué construir y en qué orden, revisar cada cambio, probar la aplicación y aceptar o corregir las propuestas.
+- **La del agente:** buena parte del código y de los tests.
+
+Para entender y poder explicar cada pieza he escrito una **[guía del código](docs/GUIA-DEL-CODIGO.md)**. Recorre la aplicación capítulo a capítulo, con ejercicios y preguntas de entrevista.
 
 ## Autor
 

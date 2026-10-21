@@ -25,6 +25,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('audio_user_likes', function (Blueprint $table) {
+            // MySQL usa el índice único para la clave foránea de audio_id: hace falta otro antes de quitarlo
+            $table->index('audio_id');
             $table->dropUnique(['audio_id', 'user_id']);
         });
     }

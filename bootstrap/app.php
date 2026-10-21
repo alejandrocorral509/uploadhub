@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureUserIsAdmin;
 use App\Http\Middleware\EnsureUserIsNotBanned;
+use App\Http\Middleware\ProtectDemoAccounts;
 use App\Http\Middleware\UseSanctumGuard;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,8 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => EnsureUserIsAdmin::class,
+            'demo.protect' => ProtectDemoAccounts::class,
         ]);
 
         $middleware->appendToGroup('web', EnsureUserIsNotBanned::class);

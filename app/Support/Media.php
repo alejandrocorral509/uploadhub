@@ -14,6 +14,10 @@ class Media
             return asset('storage/'.ltrim($path, '/'));
         }
 
+        if ($base = config('media.covers_url')) {
+            return rtrim($base, '/').'/'.ltrim($path, '/');
+        }
+
         return Storage::disk($disk)->url($path);
     }
 }

@@ -21,7 +21,10 @@ return new class extends Migration
     public function down()
     {
         Schema::table('audios', function (Blueprint $table) {
-            $table->dropColumn('filetype');
+            // La migración siguiente también la quita al deshacer: solo si sigue existiendo
+            if (Schema::hasColumn('audios', 'filetype')) {
+                $table->dropColumn('filetype');
+            }
         });
     }
 };

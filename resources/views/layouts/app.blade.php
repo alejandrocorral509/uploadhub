@@ -21,6 +21,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="flex min-h-screen flex-col" data-user="{{ auth()->id() }}">
+    @include('layouts.demo-banner')
     @include('layouts.navigation')
 
     @if (session('success'))

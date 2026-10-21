@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\DemoController;
 use App\Http\Controllers\EpisodeController;
 use App\Http\Controllers\ExploreController;
 use App\Http\Controllers\FeedController;
@@ -23,6 +24,7 @@ require __DIR__.'/auth.php';
 // --- Público -----------------------------------------------------------------
 
 Route::get('/', HomeController::class)->name('home');
+Route::post('/demo/entrar', [DemoController::class, 'login'])->middleware(['guest', 'throttle:register'])->name('demo.login');
 Route::get('/explorar', ExploreController::class)->name('explore');
 Route::redirect('/audios-publicos', '/explorar', 301);
 
@@ -47,8 +49,8 @@ Route::middleware('auth')->group(function () {
 
     // Ajustes de la cuenta
     Route::get('/ajustes', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/ajustes', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/ajustes', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::patch('/ajustes', [ProfileController::class, 'update'])->middleware('demo.protect')->name('profile.update');
+    Route::delete('/ajustes', [ProfileController::class, 'destroy'])->middleware('demo.protect')->name('profile.destroy');
     Route::redirect('/profile', '/ajustes');
 
     // Episodios

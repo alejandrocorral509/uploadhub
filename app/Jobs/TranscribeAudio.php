@@ -17,11 +17,15 @@ class TranscribeAudio implements ShouldQueue
 {
     use Queueable;
 
-    public int $timeout = 3600;
+    public int $timeout;
 
     public int $tries = 2;
 
-    public function __construct(public Audio $audio) {}
+    public function __construct(public Audio $audio)
+    {
+        // Configurable: en las colas Flex de Laravel Cloud el máximo es 90 segundos
+        $this->timeout = config('media.job_timeout');
+    }
 
     /**
      * Encola la transcripción si procede. Por privacidad, solo se transcriben los episodios

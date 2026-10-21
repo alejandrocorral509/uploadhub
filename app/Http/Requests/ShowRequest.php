@@ -3,7 +3,9 @@
 namespace App\Http\Requests;
 
 use App\Models\Show;
+use App\Support\Demo;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class ShowRequest extends FormRequest
 {
@@ -24,6 +26,17 @@ class ShowRequest extends FormRequest
             'explicit' => ['nullable', 'boolean'],
             'cover' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:min_width=300,min_height=300'],
             'remove_cover' => ['nullable', 'boolean'],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator) {
+                if (! $this->route('show') && ($limit = Demo::limitMessage($this->user(), 'shows'))) {
+                    $validator->errors()->add('title', $limit);
+                }
+            },
         ];
     }
 

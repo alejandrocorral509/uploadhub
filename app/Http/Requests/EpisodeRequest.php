@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Audio;
 use App\Rules\YouTubeUrl;
 use App\Services\ChunkedUpload;
+use App\Support\Demo;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -65,6 +66,10 @@ class EpisodeRequest extends FormRequest
                 ]);
 
                 $isCreate = ! $this->route('audio');
+
+                if ($isCreate && ($limit = Demo::limitMessage($this->user(), 'episodes'))) {
+                    $validator->errors()->add('audio', $limit);
+                }
 
                 if ($isCreate && count($sources) === 0) {
                     $validator->errors()->add('audio', 'Sube un archivo de audio o pega un enlace de YouTube.');

@@ -43,6 +43,11 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useTailwind();
 
+        // En la demo pública, subidas más pequeñas
+        if (config('demo.enabled')) {
+            config(['media.max_upload_mb' => min(config('media.max_upload_mb'), config('demo.max_upload_mb'))]);
+        }
+
         // Fuera de producción, cargar una relación sin eager loading lanza un error:
         // así los problemas N+1 se ven en desarrollo y en los tests
         Model::preventLazyLoading(! $this->app->isProduction());

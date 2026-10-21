@@ -22,8 +22,15 @@ return [
     'processing' => (bool) env('MEDIA_PROCESSING', true),
 
     // Binarios para procesar el audio. Si no existen, el audio se publica sin procesar.
-    'ffmpeg' => env('FFMPEG_BINARY', 'ffmpeg'),
-    'ffprobe' => env('FFPROBE_BINARY', 'ffprobe'),
+    // En Laravel Cloud, deploy/ffmpeg.sh los descarga en bin/ffmpeg/ durante el build.
+    'ffmpeg' => env('FFMPEG_BINARY', is_file(base_path('bin/ffmpeg/ffmpeg')) ? base_path('bin/ffmpeg/ffmpeg') : 'ffmpeg'),
+    'ffprobe' => env('FFPROBE_BINARY', is_file(base_path('bin/ffmpeg/ffprobe')) ? base_path('bin/ffmpeg/ffprobe') : 'ffprobe'),
+
+    // Tiempo máximo del procesado. Las colas Flex de Laravel Cloud cortan a los 90 s.
+    'job_timeout' => (int) env('MEDIA_JOB_TIMEOUT', 3600),
+
+    // URL pública del bucket de portadas en S3/R2 (en Laravel Cloud no se inyecta sola)
+    'covers_url' => env('COVERS_PUBLIC_URL'),
 
     // Normalizar el volumen y convertir a MP3 al procesar
     'normalize' => (bool) env('MEDIA_NORMALIZE', true),

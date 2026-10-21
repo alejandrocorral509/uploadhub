@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Services\ChunkedUpload;
+use App\Support\Demo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class UploadController extends Controller
 {
@@ -14,6 +16,11 @@ class UploadController extends Controller
             'filename' => ['required', 'string', 'max:255'],
             'size' => ['required', 'integer', 'min:1'],
         ]);
+
+        // En la demo se avisa del límite antes de subir nada
+        if ($limit = Demo::limitMessage($request->user(), 'episodes')) {
+            throw ValidationException::withMessages(['file' => $limit]);
+        }
 
         return response()->json($uploads->start($request->user(), $data['filename'], (int) $data['size']));
     }
